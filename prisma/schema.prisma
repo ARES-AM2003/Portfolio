@@ -1,0 +1,125 @@
+// This is your Prisma schema file
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id            String    @id @default(cuid())
+  email         String    @unique
+  password      String
+  name          String
+  title         String?
+  bio           String?
+  avatar        String?
+  heroImage     String?
+  location      String?
+  phone         String?
+  githubUrl     String?
+  linkedinUrl   String?
+  twitterUrl    String?
+  resumeUrl     String?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+}
+
+model Project {
+  id                String      @id @default(cuid())
+  title             String
+  slug              String      @unique
+  shortDescription  String
+  description       String      @db.Text
+  thumbnail         String?
+  heroImage         String?
+  heroVideo         String?
+  gallery           String[]
+  featured          Boolean     @default(false)
+  published         Boolean     @default(false)
+  startDate         DateTime?
+  endDate           DateTime?
+  year              Int?
+  githubUrl         String?
+  liveUrl           String?
+  caseStudyUrl      String?
+  stars             Int         @default(0)
+  forks             Int         @default(0)
+  downloads         Int         @default(0)
+  views             Int         @default(0)
+  keyFeatures       String[]
+  challenges        String[]
+  solutions         String[]
+  results           String[]
+  sortOrder         Int         @default(0)
+  technologies      Technology[] @relation("ProjectTechnologies")
+  createdAt         DateTime    @default(now())
+  updatedAt         DateTime    @updatedAt
+}
+
+model Technology {
+  id          String    @id @default(cuid())
+  name        String    @unique
+  category    String    // Backend, Frontend, Database, DevOps, Tools
+  icon        String?
+  projects    Project[] @relation("ProjectTechnologies")
+  skills      Skill[]   @relation("SkillTechnologies")
+  createdAt   DateTime  @default(now())
+}
+
+model Skill {
+  id                String       @id @default(cuid())
+  name              String       @unique
+  category          String       // Backend, Frontend, Database, DevOps, Tools
+  proficiency       Int          @default(50) // 0-100
+  yearsOfExperience Float?
+  endorsements      Int          @default(0)
+  technologies      Technology[] @relation("SkillTechnologies")
+  experiences       Experience[] @relation("ExperienceSkills")
+  createdAt         DateTime     @default(now())
+  updatedAt         DateTime     @updatedAt
+}
+
+model Experience {
+  id          String    @id @default(cuid())
+  title       String
+  company     String
+  location    String?
+  startDate   DateTime
+  endDate     DateTime?
+  current     Boolean   @default(false)
+  description String    @db.Text
+  highlights  String[]
+  skills      Skill[]   @relation("ExperienceSkills")
+  sortOrder   Int       @default(0)
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+}
+
+model Testimonial {
+  id          String    @id @default(cuid())
+  authorName  String
+  role        String
+  company     String?
+  content     String    @db.Text
+  rating      Int       @default(5) // 1-5
+  avatar      String?
+  date        DateTime  @default(now())
+  published   Boolean   @default(true)
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+}
+
+model ContactMessage {
+  id          String    @id @default(cuid())
+  name        String
+  email       String
+  subject     String?
+  message     String    @db.Text
+  status      String    @default("new") // new, read, replied
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+}
