@@ -20,8 +20,19 @@ async function getProject(slug: string) {
   }
 }
 
+async function getUserProfile() {
+  try {
+    const user = await prisma.user.findFirst()
+    return user
+  } catch (error) {
+    console.error('Failed to fetch user profile:', error)
+    return null
+  }
+}
+
 export default async function ProjectDetail({ params }: { params: { slug: string } }) {
   const project = await getProject(params.slug)
+  const userProfile = await getUserProfile()
 
   if (!project) {
     notFound()
@@ -31,136 +42,177 @@ export default async function ProjectDetail({ params }: { params: { slug: string
     <div className="flex min-h-screen">
       <Sidebar />
       
-      <main className="flex-1 bg-background-dark lg:pl-[355px]">
-        <div className="max-w-6xl mx-auto px-8 py-12">
+      <main className="flex-1 relative overflow-x-hidden lg:pl-[355px]">
+        {/* Background with Hero Image - Same as About/Projects pages */}
+        <div className="fixed inset-0 z-0">
+          {userProfile?.heroImage && (
+            <Image
+              src={userProfile.heroImage}
+              alt="Background"
+              fill
+              className="object-cover"
+              priority
+            />
+          )}
+          <div className="absolute inset-0 bg-black/70 backdrop-blur-sm" />
+        </div>
+
+        {/* Cyber Grid Overlay */}
+        <div className="fixed inset-0 z-0 opacity-20 pointer-events-none">
+          <div className="absolute inset-0" style={{
+            backgroundImage: 'linear-gradient(rgba(0, 255, 136, 0.1) 1px, transparent 1px), linear-gradient(90deg, rgba(0, 255, 136, 0.1) 1px, transparent 1px)',
+            backgroundSize: '100px 100px'
+          }} />
+        </div>
+
+        <div className="relative z-10 max-w-7xl mx-auto px-8 py-12">
           {/* Breadcrumb */}
           <div className="mb-8" style={{ animation: 'fadeInUp 0.5s ease-out' }}>
             <Link
               href="/projects"
-              className="inline-flex items-center gap-2 text-gray-400 hover:text-primary transition-colors group"
+              className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-white/5 border border-white/10 text-gray-300 hover:text-primary hover:border-primary/50 hover:bg-white/10 transition-all group"
             >
-              <ArrowLeft size={20} className="group-hover:-translate-x-1 transition-transform" />
+              <ArrowLeft size={18} className="group-hover:-translate-x-1 transition-transform" />
               Back to Projects
             </Link>
           </div>
 
-          {/* Header */}
-          <div className="mb-8" style={{ animation: 'fadeInUp 0.5s ease-out 0.1s both' }}>
-            <h1 className="text-5xl font-bold text-white mb-4 glow-text" style={{
-              textShadow: '0 0 20px rgba(0, 255, 136, 0.3)'
-            }}>
-              {project.title}
-            </h1>
-            <p className="text-xl text-gray-400 leading-relaxed">{project.shortDescription}</p>
+          {/* Header with Featured Badge */}
+          <div className="mb-12" style={{ animation: 'fadeInUp 0.5s ease-out 0.1s both' }}>
+            <div className="flex items-start justify-between gap-4 mb-6">
+              <div className="flex-1">
+                <h1 className="text-6xl font-black text-white mb-4 leading-tight" style={{
+                  textShadow: '0 0 30px rgba(0, 255, 136, 0.3)',
+                  background: 'linear-gradient(135deg, #fff 0%, rgba(0, 255, 136, 0.8) 100%)',
+                  WebkitBackgroundClip: 'text',
+                  WebkitTextFillColor: 'transparent',
+                  backgroundClip: 'text'
+                }}>
+                  {project.title}
+                </h1>
+                <p className="text-2xl text-gray-300 leading-relaxed max-w-3xl">{project.shortDescription}</p>
+              </div>
+              {project.featured && (
+                <div className="px-6 py-3 bg-primary text-background-dark font-bold rounded-full shadow-lg shadow-primary/50 flex items-center gap-2">
+                  <span className="text-xl">⭐</span>
+                  <span>FEATURED</span>
+                </div>
+              )}
+            </div>
+
+            {/* Meta Info Bar */}
+            <div className="flex flex-wrap items-center gap-4 text-sm">
+              <div className="flex items-center gap-2 px-4 py-2 bg-white/5 border border-white/10 rounded-lg">
+                <Calendar size={16} className="text-primary" />
+                <span className="text-gray-400">Year:</span>
+                <span className="text-white font-semibold">{project.year}</span>
+              </div>
+              <div className="flex items-center gap-2 px-4 py-2 bg-green-500/10 border border-green-500/30 rounded-lg">
+                <div className="w-2 h-2 rounded-full bg-green-400 animate-pulse" />
+                <span className="text-green-400 font-semibold">Completed</span>
+              </div>
+              <div className="flex items-center gap-2 px-4 py-2 bg-white/5 border border-white/10 rounded-lg">
+                <span className="text-gray-400">{project.technologies?.length || 0} Technologies</span>
+              </div>
+            </div>
           </div>
 
-          {/* Hero Image */}
+          {/* Hero Image Showcase */}
           {project.heroImage && (
             <div
-              className="relative h-96 rounded-2xl overflow-hidden mb-8 group"
+              className="relative h-[500px] rounded-2xl overflow-hidden mb-12 group"
               style={{ animation: 'fadeInUp 0.5s ease-out 0.2s both' }}
             >
               <Image
                 src={project.heroImage}
                 alt={project.title}
                 fill
-                className="object-cover group-hover:scale-105 transition-transform duration-700"
+                className="object-cover group-hover:scale-105 transition-transform duration-1000"
               />
-              <div className="absolute inset-0 bg-gradient-to-t from-background-dark/80 via-transparent to-transparent" />
-              {/* Animated border */}
-              <div className="absolute inset-0 border-2 border-primary/20 rounded-2xl group-hover:border-primary/50 transition-colors duration-300" />
+              <div className="absolute inset-0 bg-gradient-to-t from-background-dark via-transparent to-transparent" />
+              {/* Corner Accents */}
+              <div className="absolute top-4 left-4 w-16 h-16 border-t-2 border-l-2 border-primary/50 rounded-tl-xl" />
+              <div className="absolute bottom-4 right-4 w-16 h-16 border-b-2 border-r-2 border-primary/50 rounded-br-xl" />
+              {/* Glowing Border */}
+              <div className="absolute inset-0 border-2 border-primary/0 group-hover:border-primary/50 rounded-2xl transition-all duration-500" />
             </div>
           )}
 
+          {/* Main Grid Layout */}
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-12">
             {/* Main Content */}
             <div className="lg:col-span-2 space-y-8">
               {/* Overview */}
               <div
-                className="glass-effect rounded-xl p-8 hover:shadow-xl hover:shadow-primary/10 transition-all duration-300"
+                className="relative"
                 style={{ animation: 'fadeInUp 0.5s ease-out 0.3s both' }}
               >
-                <div className="flex items-center gap-2 mb-4">
-                  <div className="w-1 h-6 bg-primary rounded-full" />
-                  <h2 className="text-2xl font-bold text-white">Overview</h2>
+                <div className="flex items-center gap-3 mb-6">
+                  <div className="w-1.5 h-8 bg-gradient-to-b from-primary to-primary-dark rounded-full" />
+                  <h2 className="text-3xl font-bold text-white">Project Overview</h2>
                 </div>
-                <p className="text-gray-300 leading-relaxed whitespace-pre-wrap">
-                  {project.description}
-                </p>
+                <div className="prose prose-invert max-w-none">
+                  <p className="text-gray-300 text-lg leading-relaxed whitespace-pre-wrap">
+                    {project.description}
+                  </p>
+                </div>
               </div>
 
               {/* Key Features */}
               {project.keyFeatures && project.keyFeatures.length > 0 && (
                 <div
-                  className="glass-effect rounded-xl p-8 hover:shadow-xl hover:shadow-primary/10 transition-all duration-300"
+                  className="relative"
                   style={{ animation: 'fadeInUp 0.5s ease-out 0.4s both' }}
                 >
-                  <div className="flex items-center gap-2 mb-6">
-                    <div className="w-1 h-6 bg-primary rounded-full" />
-                    <h2 className="text-2xl font-bold text-white">Key Features</h2>
+                  <div className="flex items-center gap-3 mb-8">
+                    <div className="w-1.5 h-8 bg-gradient-to-b from-primary to-primary-dark rounded-full" />
+                    <h2 className="text-3xl font-bold text-white">Key Features</h2>
                   </div>
-                  <ul className="space-y-4">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     {(project.keyFeatures as string[]).map((feature: string, index: number) => (
-                      <li
+                      <div
                         key={index}
                         className="flex items-start gap-3 group"
                         style={{
-                          animation: `fadeInLeft 0.4s ease-out ${0.5 + (index * 0.1)}s both`
+                          animation: `fadeInUp 0.4s ease-out ${0.5 + (index * 0.05)}s both`
                         }}
                       >
-                        <div className="w-6 h-6 rounded-full bg-primary/20 flex items-center justify-center flex-shrink-0 mt-0.5 group-hover:bg-primary/30 group-hover:scale-110 transition-all duration-300">
-                          <CheckCircle2 size={14} className="text-primary" />
+                        <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-primary/30 to-primary/10 flex items-center justify-center flex-shrink-0 group-hover:scale-110 transition-transform duration-300">
+                          <CheckCircle2 size={18} className="text-primary" />
                         </div>
-                        <span className="text-gray-300 leading-relaxed group-hover:text-white transition-colors">
+                        <span className="text-gray-300 leading-relaxed group-hover:text-white transition-colors flex-1">
                           {feature}
                         </span>
-                      </li>
+                      </div>
                     ))}
-                  </ul>
+                  </div>
                 </div>
               )}
             </div>
 
             {/* Sidebar */}
             <div className="space-y-6">
-              {/* Project Info */}
-              <div
-                className="glass-effect rounded-xl p-6 hover:shadow-xl hover:shadow-primary/10 transition-all duration-300"
-                style={{ animation: 'fadeInUp 0.5s ease-out 0.35s both' }}
-              >
-                <h3 className="text-lg font-bold text-white mb-4 flex items-center gap-2">
-                  <Calendar size={20} className="text-primary" />
-                  Project Info
-                </h3>
-                <div className="space-y-4 text-sm">
-                  <div className="flex items-center justify-between pb-3 border-b border-white/10">
-                    <span className="text-gray-400">Year</span>
-                    <span className="text-white font-semibold">{project.year}</span>
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <span className="text-gray-400">Status</span>
-                    <span className="px-3 py-1 bg-green-500/10 text-green-400 text-xs font-semibold rounded-full flex items-center gap-1">
-                      <div className="w-1.5 h-1.5 rounded-full bg-green-400 animate-pulse" />
-                      Completed
-                    </span>
-                  </div>
-                </div>
-              </div>
-
               {/* Technologies */}
               {project.technologies && project.technologies.length > 0 && (
                 <div
-                  className="glass-effect rounded-xl p-6 hover:shadow-xl hover:shadow-primary/10 transition-all duration-300"
-                  style={{ animation: 'fadeInUp 0.5s ease-out 0.4s both' }}
+                  className="relative"
+                  style={{ animation: 'fadeInUp 0.5s ease-out 0.35s both' }}
                 >
-                  <h3 className="text-lg font-bold text-white mb-4">Technologies</h3>
+                  <div className="flex items-center gap-2 mb-6">
+                    <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-primary/30 to-primary/10 flex items-center justify-center">
+                      <svg className="w-4 h-4 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4" />
+                      </svg>
+                    </div>
+                    <h3 className="text-xl font-bold text-white">Tech Stack</h3>
+                  </div>
                   <div className="flex flex-wrap gap-2">
                     {project.technologies.map((tech: any, index: number) => (
                       <span
                         key={tech.id}
-                        className="px-3 py-2 bg-primary/10 border border-primary/30 text-primary text-sm rounded-lg hover:bg-primary/20 hover:scale-105 transition-all duration-200 cursor-default"
+                        className="px-4 py-2 bg-primary/10 border border-primary/30 text-primary text-sm font-medium rounded-lg hover:bg-primary/20 hover:scale-105 hover:border-primary/50 transition-all duration-300 cursor-default"
                         style={{
-                          animation: `scaleIn 0.3s ease-out ${0.45 + (index * 0.05)}s both`
+                          animation: `scaleIn 0.3s ease-out ${0.4 + (index * 0.05)}s both`
                         }}
                       >
                         {tech.name}
@@ -170,23 +222,31 @@ export default async function ProjectDetail({ params }: { params: { slug: string
                 </div>
               )}
 
-              {/* Links */}
+              {/* Quick Actions */}
               <div
-                className="glass-effect rounded-xl p-6 hover:shadow-xl hover:shadow-primary/10 transition-all duration-300"
-                style={{ animation: 'fadeInUp 0.5s ease-out 0.45s both' }}
+                className="relative"
+                style={{ animation: 'fadeInUp 0.5s ease-out 0.4s both' }}
               >
-                <h3 className="text-lg font-bold text-white mb-4">Links</h3>
+                <div className="flex items-center gap-2 mb-6">
+                  <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-primary/30 to-primary/10 flex items-center justify-center">
+                    <ExternalLink className="w-4 h-4 text-primary" />
+                  </div>
+                  <h3 className="text-xl font-bold text-white">Quick Links</h3>
+                </div>
                 <div className="space-y-3">
                   {project.githubUrl && (
                     <a
                       href={project.githubUrl}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="flex items-center gap-3 px-4 py-3 bg-white/5 hover:bg-white/10 rounded-lg transition-all duration-300 group border border-white/10 hover:border-white/20"
+                      className="flex items-center gap-3 transition-all duration-300 group hover:translate-x-2"
                     >
-                      <Github className="text-gray-400 group-hover:text-white transition-colors" size={20} />
-                      <span className="text-white font-medium">View Source Code</span>
-                      <ExternalLink className="ml-auto text-gray-400 group-hover:text-white transition-colors" size={16} />
+                      <Github className="text-gray-400 group-hover:text-white transition-colors flex-shrink-0" size={22} />
+                      <div className="flex-1">
+                        <div className="text-white font-semibold">Source Code</div>
+                        <div className="text-xs text-gray-500">View on GitHub</div>
+                      </div>
+                      <ExternalLink className="text-gray-400 group-hover:text-primary transition-colors" size={18} />
                     </a>
                   )}
                   {project.liveUrl && (
@@ -194,10 +254,16 @@ export default async function ProjectDetail({ params }: { params: { slug: string
                       href={project.liveUrl}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="flex items-center gap-3 px-4 py-3 bg-primary/10 hover:bg-primary/20 rounded-lg transition-all duration-300 group border border-primary/30 hover:border-primary/50 hover:scale-105"
+                      className="flex items-center gap-3 transition-all duration-300 group hover:translate-x-2"
                     >
-                      <ExternalLink className="text-primary" size={20} />
-                      <span className="text-primary font-semibold">Live Demo</span>
+                      <ExternalLink className="text-primary flex-shrink-0" size={22} />
+                      <div className="flex-1">
+                        <div className="text-primary font-bold">Live Demo</div>
+                        <div className="text-xs text-primary/70">Visit website</div>
+                      </div>
+                      <svg className="w-5 h-5 text-primary transform group-hover:translate-x-1 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
+                      </svg>
                     </a>
                   )}
                 </div>
@@ -205,19 +271,41 @@ export default async function ProjectDetail({ params }: { params: { slug: string
             </div>
           </div>
 
-          {/* CTA Section */}
+          {/* Bottom CTA Section */}
           <div
-            className="glass-effect rounded-2xl p-8 text-center"
+            className="relative p-12 text-center overflow-hidden"
             style={{ animation: 'fadeInUp 0.5s ease-out 0.5s both' }}
           >
-            <h2 className="text-2xl font-bold text-white mb-4">Interested in Similar Projects?</h2>
-            <p className="text-gray-400 mb-6">Let's discuss how I can help with your backend needs</p>
-            <Link
-              href="/contact"
-              className="inline-flex items-center gap-2 px-8 py-4 bg-primary hover:bg-primary-dark text-background-dark font-semibold rounded-lg transition-all duration-300 hover:scale-105 shadow-lg hover:shadow-xl hover:shadow-primary/30"
-            >
-              Get in Touch
-            </Link>
+            {/* Background Gradient */}
+            <div className="absolute inset-0 bg-gradient-to-br from-primary/10 via-transparent to-transparent" />
+            
+            {/* Decorative Elements */}
+            <div className="absolute top-0 right-0 w-32 h-32 bg-primary/5 rounded-full blur-3xl" />
+            <div className="absolute bottom-0 left-0 w-32 h-32 bg-primary/5 rounded-full blur-3xl" />
+            
+            <div className="relative z-10">
+              <h2 className="text-4xl font-bold text-white mb-4">Interested in Similar Work?</h2>
+              <p className="text-gray-300 text-lg mb-8 max-w-2xl mx-auto">
+                I specialize in building robust backend systems and scalable architectures. Let's discuss your project.
+              </p>
+              <div className="flex items-center justify-center gap-4">
+                <Link
+                  href="/contact"
+                  className="inline-flex items-center gap-2 px-8 py-4 bg-primary hover:bg-primary-dark text-background-dark font-bold rounded-xl transition-all duration-300 hover:scale-105 shadow-xl hover:shadow-2xl hover:shadow-primary/40"
+                >
+                  Start a Conversation
+                  <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
+                  </svg>
+                </Link>
+                <Link
+                  href="/projects"
+                  className="inline-flex items-center gap-2 px-8 py-4 bg-white/5 hover:bg-white/10 text-white font-semibold rounded-xl transition-all duration-300 border border-white/20 hover:border-white/40"
+                >
+                  View More Projects
+                </Link>
+              </div>
+            </div>
           </div>
         </div>
       </main>

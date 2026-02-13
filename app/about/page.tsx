@@ -179,13 +179,15 @@ function ExperienceTimeline({ experience }: { experience: any[] }) {
       <main className="flex-1 relative overflow-x-hidden lg:pl-[355px]">
         {/* Background Image with Glassmorphism - Same as Home */}
         <div className="fixed inset-0 z-0">
-          <Image
-            src={heroImage}
-            alt="Background"
-            fill
-            className="object-cover"
-            priority
-          />
+          {heroImage && (
+            <Image
+              src={heroImage}
+              alt="Background"
+              fill
+              className="object-cover"
+              priority
+            />
+          )}
           <div className="absolute inset-0 bg-black/70 backdrop-blur-sm" />
         </div>
         
