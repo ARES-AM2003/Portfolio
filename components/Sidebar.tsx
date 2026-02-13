@@ -6,32 +6,49 @@ import { usePathname, useRouter } from 'next/navigation'
 import { Home, User, FileText, Briefcase, Wrench, ChevronDown, Mail, Github, Linkedin, Twitter, Menu, X } from 'lucide-react'
 import { useState, useEffect, useRef } from 'react'
 
+// Simple cache - properly initialized
+let profileCache: { data: any, timestamp: number } | null = null
+const CACHE_DURATION = 5 * 60 * 1000 // 5 minutes
+
 export default function Sidebar() {
   const pathname = usePathname()
   const router = useRouter()
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   const [userData, setUserData] = useState({
-    name: 'Alex Smith',
-    avatar: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=400&h=400&fit=crop', // Will be dynamic from DB
-    title: 'Backend Developer',
-    github: 'https://github.com',
-    linkedin: 'https://linkedin.com',
-    twitter: 'https://twitter.com',
+    name: '',
+    avatar: '',
+    title: '',
+    github: '',
+    linkedin: '',
+    twitter: '',
   })
 
   const lastScrollTime = useRef(0)
   const isNavigating = useRef(false)
+  const [loading, setLoading] = useState(true)
 
-  // Fetch user data from API
+  // Fetch user data from API with caching
   useEffect(() => {
+    const now = Date.now()
+    if (profileCache && (now - profileCache.timestamp) < CACHE_DURATION) {
+      setUserData(profileCache.data)
+      setLoading(false)
+      return
+    }
+    
     fetch('/api/user/profile')
       .then(res => res.json())
       .then(data => {
         if (data) {
           setUserData(data)
+          profileCache = { data, timestamp: now }
         }
+        setLoading(false)
       })
-      .catch(err => console.error('Failed to load profile'))
+      .catch(err => {
+        console.error('Failed to load profile')
+        setLoading(false)
+      })
   }, [])
 
   const navItems = [
@@ -47,41 +64,41 @@ export default function Sidebar() {
   // Scroll navigation effect
   useEffect(() => {
     const handleWheel = (e: WheelEvent) => {
-      // Skip if user is in admin pages
       if (pathname.startsWith('/admin')) return
 
       const now = Date.now()
       const timeSinceLastScroll = now - lastScrollTime.current
 
-      // Debounce: only trigger if 1.5 seconds have passed since last navigation
-      if (timeSinceLastScroll < 1500 || isNavigating.current) return
+      if (timeSinceLastScroll < 4000 || isNavigating.current) return
 
-      // Check if user is at top or bottom of page
       const atTop = window.scrollY === 0
       const atBottom = window.innerHeight + window.scrollY >= document.documentElement.scrollHeight - 10
 
       const currentIndex = navItems.findIndex(item => item.href === pathname)
       if (currentIndex === -1) return
 
-      // Scroll down - go to next page
       if (e.deltaY > 0 && atBottom && currentIndex < navItems.length - 1) {
         e.preventDefault()
         isNavigating.current = true
         lastScrollTime.current = now
-        router.push(navItems[currentIndex + 1].href)
+        
         setTimeout(() => {
-          isNavigating.current = false
-        }, 500)
-      }
-      // Scroll up - go to previous page
-      else if (e.deltaY < 0 && atTop && currentIndex > 0) {
+          router.push(navItems[currentIndex + 1].href)
+          setTimeout(() => {
+            isNavigating.current = false
+          }, 3500)
+        }, 100)
+      } else if (e.deltaY < 0 && atTop && currentIndex > 0) {
         e.preventDefault()
         isNavigating.current = true
         lastScrollTime.current = now
-        router.push(navItems[currentIndex - 1].href)
+        
         setTimeout(() => {
-          isNavigating.current = false
-        }, 500)
+          router.push(navItems[currentIndex - 1].href)
+          setTimeout(() => {
+            isNavigating.current = false
+          }, 3500)
+        }, 100)
       }
     }
 
@@ -109,128 +126,180 @@ export default function Sidebar() {
 
       {/* Sidebar */}
       <aside className={`
-        fixed lg:sticky top-0 h-screen z-40
-        w-72 bg-background-surface border-r border-white/10 flex flex-col
+        fixed top-0 left-8 h-screen z-40
+        w-[340px] flex flex-col p-4
         transition-transform duration-300 ease-in-out
         ${mobileMenuOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}
       `}>
-      {/* Profile Section */}
-      <div className="p-8 border-b border-white/10">
-        <div className="flex flex-col items-center">
-          <div className="relative w-32 h-32 mb-4 rounded-full overflow-hidden ring-4 ring-primary/30">
-            <Image
-              src={userData.avatar || '/placeholder-avatar.jpg'}
-              alt={userData.name}
-              fill
-              className="object-cover"
-              priority
-            />
+        {/* Glassmorphism Container with gaps */}
+        <div className="flex-1 flex flex-col gap-4 py-4">
+          {/* Decorative top pattern */}
+          <div className="hidden lg:block h-16 rounded-2xl relative overflow-hidden group">
+            <div className="absolute inset-0 bg-gradient-to-br from-primary/20 via-primary/5 to-transparent backdrop-blur-2xl border border-white/20" />
+            <div className="absolute inset-0 opacity-30">
+              <div className="absolute inset-0" style={{
+                backgroundImage: 'radial-gradient(circle at 2px 2px, rgba(0, 255, 136, 0.15) 1px, transparent 0)',
+                backgroundSize: '20px 20px'
+              }} />
+            </div>
+            <div className="absolute inset-0 flex items-center justify-center">
+              <div className="w-12 h-0.5 bg-gradient-to-r from-transparent via-primary to-transparent opacity-50 group-hover:opacity-100 transition-opacity" />
+            </div>
           </div>
-          <h2 className="text-2xl font-bold text-white mb-1">{userData.name}</h2>
-          <p className="text-gray-400 text-sm">{userData.title}</p>
-        </div>
 
-        {/* Social Links */}
-        <div className="flex justify-center gap-4 mt-6">
-          {userData.twitter && (
-            <a
-              href={userData.twitter}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="w-10 h-10 rounded-full bg-white/5 hover:bg-primary/20 flex items-center justify-center transition-all duration-300 hover:scale-110"
-            >
-              <Twitter size={18} className="text-gray-300" />
-            </a>
-          )}
-          {userData.github && (
-            <a
-              href={userData.github}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="w-10 h-10 rounded-full bg-white/5 hover:bg-primary/20 flex items-center justify-center transition-all duration-300 hover:scale-110"
-            >
-              <Github size={18} className="text-gray-300" />
-            </a>
-          )}
-          <a
-            href="#"
-            className="w-10 h-10 rounded-full bg-white/5 hover:bg-primary/20 flex items-center justify-center transition-all duration-300 hover:scale-110"
-          >
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" className="text-gray-300">
-              <path d="M8 3C8.55228 3 9 3.44772 9 4V8H15V4C15 3.44772 15.4477 3 16 3C16.5523 3 17 3.44772 17 4V8H20C20.5523 8 21 8.44772 21 9V20C21 20.5523 20.5523 21 20 21H4C3.44772 21 3 20.5523 3 20V9C3 8.44772 3.44772 8 4 8H7V4C7 3.44772 7.44772 3 8 3ZM19 10H5V19H19V10Z" fill="currentColor"/>
-            </svg>
-          </a>
-          {userData.linkedin && (
-            <a
-              href={userData.linkedin}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="w-10 h-10 rounded-full bg-white/5 hover:bg-primary/20 flex items-center justify-center transition-all duration-300 hover:scale-110"
-            >
-              <Linkedin size={18} className="text-gray-300" />
-            </a>
-          )}
-        </div>
-      </div>
+          {/* Main sidebar content with glassmorphism */}
+          <div className="flex-1 rounded-2xl backdrop-blur-2xl bg-gradient-to-br from-background-surface/70 via-background-surface/50 to-background-surface/70 border border-white/20 shadow-2xl relative overflow-hidden">
+            {/* Animated background pattern */}
+            <div className="absolute inset-0 opacity-10">
+              <div className="absolute inset-0" style={{
+                backgroundImage: 'linear-gradient(rgba(0, 255, 136, 0.1) 1px, transparent 1px), linear-gradient(90deg, rgba(0, 255, 136, 0.1) 1px, transparent 1px)',
+                backgroundSize: '40px 40px',
+                animation: 'backgroundScroll 20s linear infinite'
+              }} />
+            </div>
 
-      {/* Navigation */}
-      <nav className="flex-1 p-6">
-        <ul className="space-y-2">
-          {navItems.map((item) => {
-            const Icon = item.icon
-            const isActive = pathname === item.href
+            {/* Glow effect */}
+            <div className="absolute top-0 left-1/2 -translate-x-1/2 w-3/4 h-32 bg-primary/10 blur-3xl rounded-full" />
             
-            return (
-              <li key={item.href}>
-                <Link
-                  href={item.href}
-                  onClick={() => setMobileMenuOpen(false)}
-                  className={`flex items-center gap-3 px-4 py-3 rounded-lg transition-all duration-300 ${
-                    isActive
-                      ? 'bg-primary/10 text-primary border-l-4 border-primary'
-                      : 'text-gray-400 hover:text-white hover:bg-white/5'
-                  }`}
-                >
-                  <Icon size={20} />
-                  <span className="font-medium">{item.label}</span>
-                </Link>
-              </li>
-            )
-          })}
-          
-          {/* Dropdown Example */}
-          {/* <li>
-            <button
-              onClick={() => setDropdownOpen(!dropdownOpen)}
-              className="w-full flex items-center justify-between gap-3 px-4 py-3 rounded-lg text-gray-400 hover:text-white hover:bg-white/5 transition-all duration-300"
-            >
-              <div className="flex items-center gap-3">
-                <Wrench size={20} />
-                <span className="font-medium">Dropdown</span>
+            <div className="relative flex flex-col h-full">
+              {/* Profile Section */}
+              <div className="p-8 border-b border-white/10">
+                <div className="flex flex-col items-center">
+                  <div className="relative w-32 h-32 mb-4 group">
+                    <div className="absolute inset-0 rounded-full bg-gradient-to-br from-primary/30 to-primary/10 blur-xl group-hover:blur-2xl transition-all duration-500" />
+                    {loading ? (
+                      <div className="relative w-full h-full rounded-full overflow-hidden ring-4 ring-primary/30 bg-white/10 animate-pulse" />
+                    ) : userData.avatar ? (
+                      <div className="relative w-full h-full rounded-full overflow-hidden ring-4 ring-primary/30 group-hover:ring-primary/50 transition-all duration-300">
+                        <Image
+                          src={userData.avatar}
+                          alt={userData.name}
+                          fill
+                          className="object-cover group-hover:scale-110 transition-transform duration-500"
+                          priority
+                        />
+                      </div>
+                    ) : null}
+                    {/* Status indicator */}
+                    <div className="absolute bottom-2 right-2 w-4 h-4 rounded-full bg-green-500 border-2 border-background-surface shadow-lg">
+                      <div className="absolute inset-0 rounded-full bg-green-500 animate-ping opacity-75" />
+                    </div>
+                  </div>
+                  
+                  {loading ? (
+                    <>
+                      <div className="h-7 w-32 bg-white/10 rounded mb-2 animate-pulse" />
+                      <div className="h-4 w-24 bg-white/10 rounded mb-2 animate-pulse" />
+                      <div className="h-6 w-28 bg-white/10 rounded-full animate-pulse" />
+                    </>
+                  ) : (
+                    <>
+                      {userData.name && <h2 className="text-2xl font-bold text-white mb-1 glow-text">{userData.name}</h2>}
+                      {userData.title && <p className="text-gray-400 text-sm mb-2">{userData.title}</p>}
+                      {userData.name && (
+                        <div className="px-3 py-1 rounded-full bg-primary/10 border border-primary/30 text-primary text-xs font-semibold">
+                          Available for work
+                        </div>
+                      )}
+                    </>
+                  )}
+                </div>
+
+                {/* Social Links */}
+                <div className="flex justify-center gap-3 mt-6">
+                  {userData.twitter && (
+                    <a
+                      href={userData.twitter}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="relative w-10 h-10 rounded-lg bg-white/5 hover:bg-primary/20 flex items-center justify-center transition-all duration-300 hover:scale-110 group overflow-hidden border border-white/10 hover:border-primary/30"
+                    >
+                      <div className="absolute inset-0 bg-gradient-to-br from-primary/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+                      <Twitter size={18} className="text-gray-300 group-hover:text-primary relative z-10 transition-colors" />
+                    </a>
+                  )}
+                  {userData.github && (
+                    <a
+                      href={userData.github}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="relative w-10 h-10 rounded-lg bg-white/5 hover:bg-primary/20 flex items-center justify-center transition-all duration-300 hover:scale-110 group overflow-hidden border border-white/10 hover:border-primary/30"
+                    >
+                      <div className="absolute inset-0 bg-gradient-to-br from-primary/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+                      <Github size={18} className="text-gray-300 group-hover:text-primary relative z-10 transition-colors" />
+                    </a>
+                  )}
+                  {userData.linkedin && (
+                    <a
+                      href={userData.linkedin}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="relative w-10 h-10 rounded-lg bg-white/5 hover:bg-primary/20 flex items-center justify-center transition-all duration-300 hover:scale-110 group overflow-hidden border border-white/10 hover:border-primary/30"
+                    >
+                      <div className="absolute inset-0 bg-gradient-to-br from-primary/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+                      <Linkedin size={18} className="text-gray-300 group-hover:text-primary relative z-10 transition-colors" />
+                    </a>
+                  )}
+                </div>
               </div>
-              <ChevronDown
-                size={16}
-                className={`transition-transform duration-300 ${dropdownOpen ? 'rotate-180' : ''}`}
-              />
-            </button>
-            {dropdownOpen && (
-              <ul className="mt-2 ml-8 space-y-1">
-                <li>
-                  <Link href="#" className="block px-4 py-2 text-sm text-gray-400 hover:text-primary">
-                    Sub Item 1
-                  </Link>
-                </li>
-                <li>
-                  <Link href="#" className="block px-4 py-2 text-sm text-gray-400 hover:text-primary">
-                    Sub Item 2
-                  </Link>
-                </li>
-              </ul>
-            )}
-          </li> */}
-        </ul>
-      </nav>
-    </aside>
+
+              {/* Navigation */}
+              <nav className="flex-1 p-6 overflow-y-auto">
+                <ul className="space-y-2 w-full">
+                  {navItems.map((item) => {
+                    const Icon = item.icon
+                    const isActive = pathname === item.href
+                    
+                    return (
+                      <li key={item.href}>
+                        <Link
+                          href={item.href}
+                          onClick={() => setMobileMenuOpen(false)}
+                          className={`relative flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-300 group overflow-hidden ${
+                            isActive
+                              ? 'bg-gradient-to-r from-primary/20 to-primary/10 text-primary shadow-lg shadow-primary/20'
+                              : 'text-gray-400 hover:text-white hover:bg-white/5'
+                          }`}
+                        >
+                          {isActive && (
+                            <>
+                              <div className="absolute left-0 top-0 bottom-0 w-1 bg-primary rounded-r-full" />
+                              <div className="absolute inset-0 bg-gradient-to-r from-primary/10 to-transparent opacity-50" />
+                            </>
+                          )}
+                          <Icon size={20} className={`relative z-10 ${isActive ? '' : 'group-hover:scale-110 transition-transform'}`} />
+                          <span className="font-medium relative z-10">{item.label}</span>
+                          {!isActive && (
+                            <div className="absolute inset-0 bg-gradient-to-r from-primary/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+                          )}
+                        </Link>
+                      </li>
+                    )
+                  })}
+                </ul>
+              </nav>
+            </div>
+          </div>
+
+          {/* Decorative bottom pattern */}
+          <div className="hidden lg:block h-16 rounded-2xl relative overflow-hidden group">
+            <div className="absolute inset-0 bg-gradient-to-tl from-primary/20 via-primary/5 to-transparent backdrop-blur-2xl border border-white/20" />
+            <div className="absolute inset-0 opacity-30">
+              <div className="absolute inset-0" style={{
+                backgroundImage: 'radial-gradient(circle at 2px 2px, rgba(0, 255, 136, 0.15) 1px, transparent 0)',
+                backgroundSize: '20px 20px'
+              }} />
+            </div>
+            <div className="absolute inset-0 flex items-center justify-center">
+              <div className="flex gap-1">
+                <div className="w-1 h-1 rounded-full bg-primary/50 animate-pulse" style={{ animationDelay: '0s' }} />
+                <div className="w-1 h-1 rounded-full bg-primary/50 animate-pulse" style={{ animationDelay: '0.2s' }} />
+                <div className="w-1 h-1 rounded-full bg-primary/50 animate-pulse" style={{ animationDelay: '0.4s' }} />
+              </div>
+            </div>
+          </div>
+        </div>
+      </aside>
     </>
   )
 }

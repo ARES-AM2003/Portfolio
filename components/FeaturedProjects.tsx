@@ -51,7 +51,7 @@ export default function FeaturedProjects() {
 
         <div className="text-center">
           <Link
-            href="/portfolio"
+            href="/projects"
             className="inline-flex items-center gap-2 px-8 py-4 bg-primary/10 hover:bg-primary/20 border-2 border-primary text-primary font-semibold rounded-lg transition-all duration-300 hover:scale-105"
           >
             View All Projects

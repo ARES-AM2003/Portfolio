@@ -1,154 +1,327 @@
+'use client'
+
 import Sidebar from '@/components/Sidebar'
-import prisma from '@/lib/prisma'
+import { SkillCardSkeleton, ExperienceCardSkeleton } from '@/components/LoadingSkeleton'
+import { useEffect, useState } from 'react'
+import Image from 'next/image'
+import { Star } from 'lucide-react'
 
-async function getUserProfile() {
-  try {
-    const user = await prisma.user.findFirst()
-    return user
-  } catch (error) {
-    return null
+// Simple cache to store API responses
+const cache: { [key: string]: { data: any, timestamp: number } } = {}
+const CACHE_DURATION = 5 * 60 * 1000 // 5 minutes
+
+async function fetchWithCache(url: string) {
+  const now = Date.now()
+  if (cache[url] && (now - cache[url].timestamp) < CACHE_DURATION) {
+    return cache[url].data
   }
+  
+  const response = await fetch(url)
+  const data = await response.json()
+  cache[url] = { data, timestamp: now }
+  return data
 }
 
-async function getSkills() {
-  try {
-    const skills = await prisma.skill.findMany({
-      include: { technologies: true },
-      orderBy: { category: 'asc' },
-    })
-    
-    // Group skills by category with full skill data
-    const grouped: Record<string, any[]> = {}
-    skills.forEach((skill) => {
-      if (!grouped[skill.category]) {
-        grouped[skill.category] = []
+export default function AboutPage() {
+  const [heroImage, setHeroImage] = useState('')
+  const [profile, setProfile] = useState<any>(null)
+  const [skills, setSkills] = useState<Record<string, any[]>>({})
+  const [experience, setExperience] = useState<any[]>([])
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    Promise.all([
+      fetchWithCache('/api/user/profile'),
+      fetchWithCache('/api/skills'),
+      fetchWithCache('/api/experience')
+    ]).then(([profileData, skillsData, experienceData]) => {
+      if (profileData) {
+        setProfile(profileData)
+        if (profileData.heroImage) {
+          setHeroImage(profileData.heroImage)
+        }
       }
-      grouped[skill.category].push({
-        name: skill.name,
-        proficiency: skill.proficiency,
-        yearsOfExperience: skill.yearsOfExperience,
-      })
+      
+      // Group skills by category
+      if (Array.isArray(skillsData)) {
+        const grouped: Record<string, any[]> = {}
+        skillsData.forEach((skill: any) => {
+          if (!grouped[skill.category]) {
+            grouped[skill.category] = []
+          }
+          grouped[skill.category].push({
+            name: skill.name,
+            proficiency: skill.proficiency,
+            yearsOfExperience: skill.yearsOfExperience,
+          })
+        })
+        setSkills(grouped)
+      }
+      
+      if (Array.isArray(experienceData)) {
+        setExperience(experienceData)
+      }
+      
+      setLoading(false)
+    }).catch(err => {
+      console.error('Failed to load data:', err)
+      setLoading(false)
     })
-    
-    return grouped
-  } catch (error) {
-    console.error('Error fetching skills:', error)
-    return {}
+  }, [])
+
+function SkillsSection({ skills }: { skills: Record<string, any[]> }) {
+  if (Object.keys(skills).length === 0) {
+    return <p className="text-gray-400">No skills added yet. Add skills from the admin panel.</p>
   }
+
+  return (
+    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+      {Object.entries(skills).map(([category, skillList], categoryIndex) => (
+        <div
+          key={category}
+          style={{
+            animation: `fadeInUp 0.6s ease-out ${categoryIndex * 0.1}s both`
+          }}
+        >
+          <h3 className="text-xl font-semibold text-primary mb-4 flex items-center gap-2">
+            <span className="w-2 h-2 rounded-full bg-primary animate-pulse" />
+            {category}
+          </h3>
+          <div className="space-y-3">
+            {(skillList as any[]).map((skill, index) => (
+              <div
+                key={skill.name}
+                className="bg-white/5 border border-white/10 rounded-lg p-4 hover:bg-white/10 hover:border-primary/30 transition-all duration-300 group"
+                style={{
+                  animation: `fadeInUp 0.4s ease-out ${(categoryIndex * 0.1) + (index * 0.05)}s both`
+                }}
+              >
+                <div className="flex items-center justify-between mb-2">
+                  <span className="text-white font-medium group-hover:text-primary transition-colors">
+                    {skill.name}
+                  </span>
+                  {skill.yearsOfExperience && (
+                    <span className="text-sm text-gray-400 bg-white/5 px-2 py-1 rounded">
+                      {skill.yearsOfExperience} {skill.yearsOfExperience === 1 ? 'year' : 'years'}
+                    </span>
+                  )}
+                </div>
+                <div className="space-y-1">
+                  <div className="flex items-center justify-between text-xs">
+                    <span className="text-gray-400">Proficiency</span>
+                    <span className="text-primary font-semibold">{skill.proficiency}%</span>
+                  </div>
+                  <div className="w-full bg-white/5 rounded-full h-2 overflow-hidden">
+                    <div
+                      className="bg-gradient-to-r from-primary to-primary-dark h-2 rounded-full transition-all duration-1000 ease-out"
+                      style={{
+                        width: `${skill.proficiency}%`,
+                        animation: `expandWidth 1s ease-out ${(categoryIndex * 0.1) + (index * 0.05) + 0.3}s both`
+                      }}
+                    />
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      ))}
+    </div>
+  )
 }
 
-async function getExperience() {
-  try {
-    const experience = await prisma.experience.findMany({
-      orderBy: { startDate: 'desc' },
-    })
-    return experience
-  } catch (error) {
-    console.error('Error fetching experience:', error)
-    return []
+function ExperienceTimeline({ experience }: { experience: any[] }) {
+  if (experience.length === 0) {
+    return <p className="text-gray-400">No experience added yet. Add your work history from the admin panel.</p>
   }
-}
 
-export default async function AboutPage() {
-  const profile = await getUserProfile()
-  const skills = await getSkills()
-  const experience = await getExperience()
+  return (
+    <div className="space-y-8">
+      {experience.map((exp: any, index: number) => {
+        const startYear = new Date(exp.startDate).getFullYear()
+        const endYear = exp.endDate ? new Date(exp.endDate).getFullYear() : 'Present'
+        
+        return (
+          <div
+            key={exp.id || index}
+            className="flex gap-6 group"
+            style={{
+              animation: `fadeInLeft 0.6s ease-out ${index * 0.15}s both`
+            }}
+          >
+            <div className="flex-shrink-0 w-32 text-primary font-semibold relative">
+              <div className="sticky top-8">
+                {startYear} - {endYear}
+              </div>
+            </div>
+            <div className="flex-1 pb-8 border-l-2 border-white/[0.03] pl-6 relative group-hover:border-primary/20 transition-colors duration-300">
+              {/* Timeline dot */}
+              <div className="absolute left-[-9px] top-0 w-4 h-4 rounded-full bg-primary border-4 border-background-dark group-hover:scale-125 transition-transform duration-300" />
+              
+              <div className="p-6">
+                <h3 className="text-xl font-bold text-white mb-1 group-hover:text-primary transition-colors">
+                  {exp.title}
+                </h3>
+                <p className="text-gray-400 mb-3 font-medium">{exp.company}</p>
+                <p className="text-gray-300 leading-relaxed">{exp.description}</p>
+              </div>
+            </div>
+          </div>
+        )
+      })}
+    </div>
+  )
+}
 
   return (
     <div className="flex min-h-screen">
       <Sidebar />
-      <main className="flex-1 relative">
-        {/* Cyber Grid Background */}
-        <div className="fixed inset-0 pointer-events-none z-0 opacity-30">
+      <main className="flex-1 relative overflow-x-hidden lg:pl-[355px]">
+        {/* Background Image with Glassmorphism - Same as Home */}
+        <div className="fixed inset-0 z-0">
+          <Image
+            src={heroImage}
+            alt="Background"
+            fill
+            className="object-cover"
+            priority
+          />
+          <div className="absolute inset-0 bg-black/70 backdrop-blur-sm" />
+        </div>
+        
+        {/* Cyber Grid Overlay */}
+        <div className="fixed inset-0 z-0 opacity-20 pointer-events-none">
           <div className="absolute inset-0" style={{
             backgroundImage: 'linear-gradient(rgba(0, 255, 136, 0.1) 1px, transparent 1px), linear-gradient(90deg, rgba(0, 255, 136, 0.1) 1px, transparent 1px)',
-            backgroundSize: '50px 50px'
+            backgroundSize: '100px 100px'
           }} />
         </div>
-        <section className="relative z-10 min-h-screen p-16">
-          <div className="max-w-6xl mx-auto">
-            <h1 className="text-5xl font-bold text-white mb-8">About Me</h1>
+        
+        <section className="relative z-10 min-h-screen p-8 md:p-16">
+          <div className="max-w-7xl mx-auto">
+            <h1
+              className="text-5xl font-bold text-white mb-12 glow-text"
+              style={{
+                textShadow: '0 0 20px rgba(0, 255, 136, 0.3)',
+                animation: 'fadeInUp 0.6s ease-out'
+              }}
+            >
+              About Me
+            </h1>
             
-            <div className="glass-effect rounded-2xl p-8 mb-8">
-              <p className="text-xl text-gray-300 leading-relaxed mb-6">
-                {profile?.bio || "I'm a passionate backend developer with expertise in building scalable, high-performance systems. With over 5 years of experience, I've worked on various projects ranging from microservices architectures to real-time APIs."}
-              </p>
-              <p className="text-lg text-gray-400 leading-relaxed">
-                My focus is on creating robust backend solutions that power modern applications. 
-                I specialize in Node.js, Python, and cloud infrastructure, always staying up-to-date 
-                with the latest technologies and best practices.
-              </p>
+            {/* Grid Layout: 2 columns first row, 1 column second row */}
+            <div className="grid grid-cols-1 lg:grid-cols-[1.3fr_0.7fr] gap-8 mb-12">
+              {/* About Me Details - First Column */}
+              <div
+                style={{ animation: 'fadeInUp 0.6s ease-out 0.2s both' }}
+              >
+                <h2 className="text-3xl font-bold text-white mb-6 flex items-center gap-3">
+                  <span className="text-primary">{'<'}</span>
+                  My Story
+                  <span className="text-primary">{'/>'}</span>
+                </h2>
+                <div className="space-y-6">
+                  {profile?.bio && (
+                    <p className="text-lg text-gray-300 leading-relaxed">
+                      {profile.bio}
+                    </p>
+                  )}
+                </div>
+              </div>
+
+              {/* Skills - Second Column */}
+              <div
+                style={{ animation: 'fadeInUp 0.6s ease-out 0.4s both' }}
+              >
+                <h2 className="text-3xl font-bold text-white mb-6 flex items-center gap-3">
+                  <span className="text-primary">{'<'}</span>
+                  Technical Skills
+                  <span className="text-primary">{'/>'}</span>
+                </h2>
+                
+                {loading ? (
+                  <div className="space-y-6">
+                    {[...Array(2)].map((_, i) => (
+                      <div key={i}>
+                        <div className="h-6 bg-white/10 rounded w-32 mb-4 animate-pulse" />
+                        <div className="space-y-3">
+                          {[...Array(2)].map((_, j) => (
+                            <SkillCardSkeleton key={j} />
+                          ))}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="space-y-6 max-h-[600px] overflow-y-auto pr-2 custom-scrollbar">
+                    {Object.keys(skills).length === 0 ? (
+                      <p className="text-gray-400">No skills added yet. Add skills from the admin panel.</p>
+                    ) : (
+                      Object.entries(skills).map(([category, skillList], categoryIndex) => (
+                        <div key={category}>
+                          <h3 className="text-lg font-semibold text-primary mb-3 flex items-center gap-2">
+                            <span className="w-2 h-2 rounded-full bg-primary animate-pulse" />
+                            {category}
+                          </h3>
+                          <div className="grid grid-cols-2 gap-3">
+                            {(skillList as any[]).map((skill, index) => {
+                              // Convert proficiency to stars (0-5)
+                              const stars = Math.round((skill.proficiency / 100) * 5)
+                              
+                              return (
+                                <div
+                                  key={skill.name}
+                                  className="p-3"
+                                >
+                                  <div className="flex items-center justify-between mb-2">
+                                    <span className="text-white text-sm font-medium">
+                                      {skill.name}
+                                    </span>
+                                    {skill.yearsOfExperience && (
+                                      <span className="text-xs text-gray-400 bg-white/5 px-2 py-0.5 rounded">
+                                        {skill.yearsOfExperience}y
+                                      </span>
+                                    )}
+                                  </div>
+                                  <div className="flex items-center gap-1">
+                                    {[...Array(5)].map((_, i) => (
+                                      <Star
+                                        key={i}
+                                        size={16}
+                                        className={i < stars ? 'fill-primary text-primary' : 'text-gray-600'}
+                                      />
+                                    ))}
+                                  </div>
+                                </div>
+                              )
+                            })}
+                          </div>
+                        </div>
+                      ))
+                    )}
+                  </div>
+                )}
+              </div>
             </div>
 
-            {/* Skills Section */}
-            <div className="glass-effect rounded-2xl p-8 mb-8">
-              <h2 className="text-3xl font-bold text-white mb-6">Technical Skills</h2>
+            {/* Experience - Full Width Second Row */}
+            <div
+              style={{ animation: 'fadeInUp 0.6s ease-out 0.6s both' }}
+            >
+              <h2 className="text-3xl font-bold text-white mb-8 flex items-center gap-3">
+                <span className="text-primary">{'<'}</span>
+                Experience
+                <span className="text-primary">{'/>'}</span>
+              </h2>
               
-              {Object.keys(skills).length > 0 ? (
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  {Object.entries(skills).map(([category, skillList]) => (
-                    <div key={category}>
-                      <h3 className="text-xl font-semibold text-primary mb-4">{category}</h3>
-                      <div className="space-y-3">
-                        {(skillList as any[]).map((skill) => (
-                          <div key={skill.name} className="bg-white/5 border border-white/10 rounded-lg p-4">
-                            <div className="flex items-center justify-between mb-2">
-                              <span className="text-white font-medium">{skill.name}</span>
-                              {skill.yearsOfExperience && (
-                                <span className="text-sm text-gray-400">
-                                  {skill.yearsOfExperience} {skill.yearsOfExperience === 1 ? 'year' : 'years'}
-                                </span>
-                              )}
-                            </div>
-                            <div className="space-y-1">
-                              <div className="flex items-center justify-between text-xs">
-                                <span className="text-gray-400">Proficiency</span>
-                                <span className="text-primary font-semibold">{skill.proficiency}%</span>
-                              </div>
-                              <div className="w-full bg-white/5 rounded-full h-2">
-                                <div
-                                  className="bg-primary h-2 rounded-full transition-all"
-                                  style={{ width: `${skill.proficiency}%` }}
-                                />
-                              </div>
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
+              {loading ? (
+                <div className="space-y-8">
+                  {[...Array(3)].map((_, i) => (
+                    <ExperienceCardSkeleton key={i} />
                   ))}
                 </div>
               ) : (
-                <p className="text-gray-400">No skills added yet. Add skills from the admin panel.</p>
-              )}
-            </div>
-
-            {/* Experience Timeline */}
-            <div className="glass-effect rounded-2xl p-8">
-              <h2 className="text-3xl font-bold text-white mb-8">Experience</h2>
-              
-              {experience.length > 0 ? (
-                <div className="space-y-8">
-                  {experience.map((exp: any, index: number) => {
-                    const startYear = new Date(exp.startDate).getFullYear()
-                    const endYear = exp.endDate ? new Date(exp.endDate).getFullYear() : 'Present'
-                    
-                    return (
-                      <div key={exp.id || index} className="flex gap-6">
-                        <div className="flex-shrink-0 w-32 text-primary font-semibold">
-                          {startYear} - {endYear}
-                        </div>
-                        <div className="flex-1 pb-8 border-l-2 border-white/10 pl-6">
-                          <h3 className="text-xl font-bold text-white mb-1">{exp.title}</h3>
-                          <p className="text-gray-400 mb-2">{exp.company}</p>
-                          <p className="text-gray-300">{exp.description}</p>
-                        </div>
-                      </div>
-                    )
-                  })}
-                </div>
-              ) : (
-                <p className="text-gray-400">No experience added yet. Add your work history from the admin panel.</p>
+                <ExperienceTimeline experience={experience} />
               )}
             </div>
           </div>
