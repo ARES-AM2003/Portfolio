@@ -101,8 +101,8 @@ function SkillsSection({ skills }: { skills: Record<string, any[]> }) {
                     {skill.name}
                   </span>
                   {skill.yearsOfExperience && (
-                    <span className="text-sm text-gray-400 bg-white/5 px-2 py-1 rounded">
-                      {skill.yearsOfExperience} {skill.yearsOfExperience === 1 ? 'year' : 'years'}
+                    <span className="text-xs text-primary font-semibold bg-primary/10 border border-primary/30 px-3 py-1 rounded-full">
+                      {skill.yearsOfExperience}+ {skill.yearsOfExperience === 1 ? 'yr' : 'yrs'}
                     </span>
                   )}
                 </div>
@@ -209,28 +209,54 @@ function ExperienceTimeline({ experience }: { experience: any[] }) {
               About Me
             </h1>
             
-            {/* Grid Layout: 2 columns first row, 1 column second row */}
-            <div className="grid grid-cols-1 lg:grid-cols-[1.3fr_0.7fr] gap-8 mb-12">
-              {/* About Me Details - First Column */}
-              <div
-                style={{ animation: 'fadeInUp 0.6s ease-out 0.2s both' }}
-              >
-                <h2 className="text-3xl font-bold text-white mb-6 flex items-center gap-3">
-                  <span className="text-primary">{'<'}</span>
-                  My Story
-                  <span className="text-primary">{'/>'}</span>
-                </h2>
-                <div className="space-y-6">
-                  {profile?.bio && (
-                    <p className="text-lg text-gray-300 leading-relaxed">
-                      {profile.bio}
-                    </p>
+            {/* Grid Layout: 2 columns - Left (Story + Experience), Right (Skills) */}
+            <div className="grid grid-cols-1 lg:grid-cols-[1.3fr_0.7fr] gap-8 items-start">
+              {/* Left Column: Story + Experience */}
+              <div className="space-y-12">
+                {/* My Story */}
+                <div
+                  style={{ animation: 'fadeInUp 0.6s ease-out 0.2s both' }}
+                >
+                  <h2 className="text-3xl font-bold text-white mb-6 flex items-center gap-3">
+                    <span className="text-primary">{'<'}</span>
+                    My Story
+                    <span className="text-primary">{'/>'}</span>
+                  </h2>
+                  <div className="space-y-6">
+                    {profile?.bio && (
+                      <p className="text-lg text-gray-300 leading-relaxed">
+                        {profile.bio}
+                      </p>
+                    )}
+                  </div>
+                </div>
+
+                {/* Experience */}
+                <div
+                  className="mt-8"
+                  style={{ animation: 'fadeInUp 0.6s ease-out 0.6s both' }}
+                >
+                  <h2 className="text-3xl font-bold text-white mb-8 flex items-center gap-3">
+                    <span className="text-primary">{'<'}</span>
+                    Experience
+                    <span className="text-primary">{'/>'}</span>
+                  </h2>
+                  
+                  {loading ? (
+                    <div className="space-y-8">
+                      {[...Array(3)].map((_, i) => (
+                        <ExperienceCardSkeleton key={i} />
+                      ))}
+                    </div>
+                  ) : (
+                    <ExperienceTimeline experience={experience} />
                   )}
                 </div>
               </div>
 
-              {/* Skills - Second Column */}
+              {/* Right Column: Skills */}
               <div
+                className="lg:sticky lg:top-8"
                 style={{ animation: 'fadeInUp 0.6s ease-out 0.4s both' }}
               >
                 <h2 className="text-3xl font-bold text-white mb-6 flex items-center gap-3">
@@ -253,7 +279,7 @@ function ExperienceTimeline({ experience }: { experience: any[] }) {
                     ))}
                   </div>
                 ) : (
-                  <div className="space-y-6 max-h-[600px] overflow-y-auto pr-2 custom-scrollbar">
+                  <div className="space-y-6 max-h-[calc(100vh-200px)] overflow-y-auto pr-2 custom-scrollbar">
                     {Object.keys(skills).length === 0 ? (
                       <p className="text-gray-400">No skills added yet. Add skills from the admin panel.</p>
                     ) : (
@@ -302,27 +328,6 @@ function ExperienceTimeline({ experience }: { experience: any[] }) {
                   </div>
                 )}
               </div>
-            </div>
-
-            {/* Experience - Full Width Second Row */}
-            <div
-              style={{ animation: 'fadeInUp 0.6s ease-out 0.6s both' }}
-            >
-              <h2 className="text-3xl font-bold text-white mb-8 flex items-center gap-3">
-                <span className="text-primary">{'<'}</span>
-                Experience
-                <span className="text-primary">{'/>'}</span>
-              </h2>
-              
-              {loading ? (
-                <div className="space-y-8">
-                  {[...Array(3)].map((_, i) => (
-                    <ExperienceCardSkeleton key={i} />
-                  ))}
-                </div>
-              ) : (
-                <ExperienceTimeline experience={experience} />
-              )}
             </div>
           </div>
         </section>

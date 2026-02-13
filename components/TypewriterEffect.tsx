@@ -37,8 +37,8 @@ export default function TypewriterEffect({
         if (currentText.length < targetText.length) {
           setCurrentText(targetText.slice(0, currentText.length + 1))
         } else {
-          // Finished typing, wait then start deleting
-          setTimeout(() => setIsDeleting(true), delayBetweenTexts)
+          // Finished typing, wait 5 seconds then start deleting
+          setTimeout(() => setIsDeleting(true), 5000)
         }
       } else {
         // Deleting backward
@@ -61,12 +61,9 @@ export default function TypewriterEffect({
   }
 
   return (
-    <div className="flex items-center gap-3">
-      <span className="text-2xl text-gray-300">{'>'}</span>
-      <span className="text-2xl font-semibold text-primary">
-        {currentText}
-        <span className="animate-pulse">_</span>
-      </span>
+    <div className="text-lg text-primary italic leading-relaxed">
+      {currentText}
+      <span className="animate-pulse">_</span>
     </div>
   )
 }

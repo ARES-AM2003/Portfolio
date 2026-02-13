@@ -61,50 +61,50 @@ export default function Sidebar() {
 
   const [dropdownOpen, setDropdownOpen] = useState(false)
 
-  // Scroll navigation effect
-  useEffect(() => {
-    const handleWheel = (e: WheelEvent) => {
-      if (pathname.startsWith('/admin')) return
+  // Scroll navigation effect - COMMENTED OUT
+  // useEffect(() => {
+  //   const handleWheel = (e: WheelEvent) => {
+  //     if (pathname.startsWith('/admin')) return
 
-      const now = Date.now()
-      const timeSinceLastScroll = now - lastScrollTime.current
+  //     const now = Date.now()
+  //     const timeSinceLastScroll = now - lastScrollTime.current
 
-      if (timeSinceLastScroll < 4000 || isNavigating.current) return
+  //     if (timeSinceLastScroll < 4000 || isNavigating.current) return
 
-      const atTop = window.scrollY === 0
-      const atBottom = window.innerHeight + window.scrollY >= document.documentElement.scrollHeight - 10
+  //     const atTop = window.scrollY === 0
+  //     const atBottom = window.innerHeight + window.scrollY >= document.documentElement.scrollHeight - 10
 
-      const currentIndex = navItems.findIndex(item => item.href === pathname)
-      if (currentIndex === -1) return
+  //     const currentIndex = navItems.findIndex(item => item.href === pathname)
+  //     if (currentIndex === -1) return
 
-      if (e.deltaY > 0 && atBottom && currentIndex < navItems.length - 1) {
-        e.preventDefault()
-        isNavigating.current = true
-        lastScrollTime.current = now
+  //     if (e.deltaY > 0 && atBottom && currentIndex < navItems.length - 1) {
+  //       e.preventDefault()
+  //       isNavigating.current = true
+  //       lastScrollTime.current = now
         
-        setTimeout(() => {
-          router.push(navItems[currentIndex + 1].href)
-          setTimeout(() => {
-            isNavigating.current = false
-          }, 3500)
-        }, 100)
-      } else if (e.deltaY < 0 && atTop && currentIndex > 0) {
-        e.preventDefault()
-        isNavigating.current = true
-        lastScrollTime.current = now
+  //       setTimeout(() => {
+  //         router.push(navItems[currentIndex + 1].href)
+  //         setTimeout(() => {
+  //           isNavigating.current = false
+  //         }, 3500)
+  //       }, 100)
+  //     } else if (e.deltaY < 0 && atTop && currentIndex > 0) {
+  //       e.preventDefault()
+  //       isNavigating.current = true
+  //       lastScrollTime.current = now
         
-        setTimeout(() => {
-          router.push(navItems[currentIndex - 1].href)
-          setTimeout(() => {
-            isNavigating.current = false
-          }, 3500)
-        }, 100)
-      }
-    }
+  //       setTimeout(() => {
+  //         router.push(navItems[currentIndex - 1].href)
+  //         setTimeout(() => {
+  //           isNavigating.current = false
+  //         }, 3500)
+  //       }, 100)
+  //     }
+  //   }
 
-    window.addEventListener('wheel', handleWheel, { passive: false })
-    return () => window.removeEventListener('wheel', handleWheel)
-  }, [pathname, router, navItems])
+  //   window.addEventListener('wheel', handleWheel, { passive: false })
+  //   return () => window.removeEventListener('wheel', handleWheel)
+  // }, [pathname, router, navItems])
 
   return (
     <>
