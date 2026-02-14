@@ -9,7 +9,12 @@ export default function Home() {
   const [heroImage, setHeroImage] = useState('')
 
   useEffect(() => {
-    fetch('/api/user/profile')
+    fetch('/api/user/profile?t=' + Date.now(), {
+      cache: 'no-store',
+      headers: {
+        'Cache-Control': 'no-cache'
+      }
+    })
       .then(res => res.json())
       .then(data => {
         if (data?.heroImage) {

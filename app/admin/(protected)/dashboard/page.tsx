@@ -1,25 +1,67 @@
+'use client'
+
 import AdminSidebar from '@/components/AdminSidebar'
-import { Eye, MessageSquare, Briefcase, TrendingUp } from 'lucide-react'
-import prisma from '@/lib/prisma'
+import { Eye, MessageSquare, Briefcase, TrendingUp, RefreshCw } from 'lucide-react'
+import { useState, useEffect } from 'react'
 
-async function getStats() {
-  try {
-    const [projectCount, messageCount] = await Promise.all([
-      prisma.project.count(),
-      prisma.contactMessage.count({ where: { status: 'new' } }),
-    ])
-    
-    return {
-      projects: projectCount,
-      messages: messageCount,
+export default function AdminDashboard() {
+  const [stats, setStats] = useState({ projects: 0, messages: 0 })
+  const [loading, setLoading] = useState(true)
+  const [clearing, setClearing] = useState(false)
+
+  useEffect(() => {
+    fetchStats()
+  }, [])
+
+  const fetchStats = async () => {
+    try {
+      const [projectsRes, messagesRes] = await Promise.all([
+        fetch('/api/admin/projects'),
+        fetch('/api/admin/messages')
+      ])
+      
+      if (projectsRes.ok && messagesRes.ok) {
+        const projects = await projectsRes.json()
+        const messages = await messagesRes.json()
+        setStats({
+          projects: projects.length || 0,
+          messages: messages.filter((m: any) => m.status === 'new').length || 0
+        })
+      }
+    } catch (error) {
+      console.error('Failed to fetch stats:', error)
+    } finally {
+      setLoading(false)
     }
-  } catch (error) {
-    return { projects: 0, messages: 0 }
   }
-}
 
-export default async function AdminDashboard() {
-  const stats = await getStats()
+  const handleClearCache = async () => {
+    setClearing(true)
+    try {
+      const response = await fetch('/api/admin/cache', {
+        method: 'POST',
+      })
+      
+      const result = await response.json()
+      
+      if (response.ok) {
+        // Clear all sessionStorage caches
+        if (typeof window !== 'undefined') {
+          sessionStorage.removeItem('profileCache')
+          sessionStorage.removeItem('heroCache')
+        }
+        alert('✅ Cache cleared successfully! Page will reload.')
+        window.location.reload()
+      } else {
+        alert('❌ Failed to clear cache: ' + result.error)
+      }
+    } catch (error) {
+      alert('❌ Error clearing cache')
+      console.error(error)
+    } finally {
+      setClearing(false)
+    }
+  }
   
   const statCards = [
     { label: 'Total Projects', value: stats.projects.toString(), icon: Briefcase, color: 'text-blue-400' },
@@ -34,9 +76,19 @@ export default async function AdminDashboard() {
       
       <main className="flex-1 p-8">
         <div className="max-w-7xl mx-auto">
-          <div className="mb-8">
-            <h1 className="text-3xl font-bold text-white mb-2">Dashboard</h1>
-            <p className="text-gray-400">Welcome back! Here&apos;s your portfolio overview.</p>
+          <div className="mb-8 flex items-center justify-between">
+            <div>
+              <h1 className="text-3xl font-bold text-white mb-2">Dashboard</h1>
+              <p className="text-gray-400">Welcome back! Here&apos;s your portfolio overview.</p>
+            </div>
+            <button
+              onClick={handleClearCache}
+              disabled={clearing}
+              className="flex items-center gap-2 px-4 py-2 bg-primary hover:bg-primary/90 text-white rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              <RefreshCw size={18} className={clearing ? 'animate-spin' : ''} />
+              {clearing ? 'Clearing...' : 'Clear Cache'}
+            </button>
           </div>
 
           {/* Stats Grid */}

@@ -3,9 +3,9 @@ set -e
 
 echo "🚀 Starting Portfolio App..."
 
-# Run Prisma migrations
+# Run Prisma migrations using local prisma
 echo "📦 Running database migrations..."
-npx prisma db push --skip-generate
+npx prisma db push --skip-generate --accept-data-loss
 
 # Check if migration was successful
 if [ $? -eq 0 ]; then

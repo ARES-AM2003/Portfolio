@@ -31,19 +31,19 @@ Add the following content:
 
 ```env
 # Database (SQLite - will be created in /app/data)
-DATABASE_URL="file:/app/data/portfolio.db"
+DATABASE_URL=file:/app/data/portfolio.db
 
 # NextAuth
-NEXTAUTH_URL="https://yourdomain.com"
-NEXTAUTH_SECRET="generate-a-secure-random-string-here"
+NEXTAUTH_URL=https://yourdomain.com
+NEXTAUTH_SECRET=generate-a-secure-random-string-here
 
 # Admin Credentials
-ADMIN_EMAIL="admin@example.com"
-ADMIN_PASSWORD="your-secure-password"
+ADMIN_EMAIL=admin@example.com
+ADMIN_PASSWORD=your-secure-password
 
 # Gmail Configuration (Optional - for contact form notifications)
-GMAIL_USER="your-email@gmail.com"
-GMAIL_APP_PASSWORD="your-app-password"
+GMAIL_USER=your-email@gmail.com
+GMAIL_APP_PASSWORD=your-app-password
 
 # Production
 NODE_ENV=production
@@ -62,7 +62,7 @@ openssl rand -base64 32
 docker run -d \
   --name portfolio-app \
   --restart unless-stopped \
-  --network bridge \
+  --network fotosfolio-zip \
   --env-file /opt/portfolio/.env \
   -v portfolio-sqlite-data:/app/data \
   ares2003/portfolio-app:v1
@@ -71,7 +71,7 @@ docker run -d \
 ### Explanation:
 - `--name portfolio-app` - Container name
 - `--restart unless-stopped` - Auto-restart on failure/reboot
-- `--network bridge` - Use default bridge network (no external ports)
+- `--network fotosfolio-zip` - Use fotosfolio-zip network for nginx connectivity
 - `--env-file` - Load environment variables
 - `-v portfolio-sqlite-data:/app/data` - Persistent SQLite database
 - **NO `-p` flag** - Ports are NOT exposed to the host
@@ -202,7 +202,7 @@ docker run -d \
   --network host \
   --env-file /opt/portfolio/.env \
   -v portfolio-sqlite-data:/app/data \
-  ares2003/portfolio-app:latest
+  ares2003/portfolio-app:v1
 ```
 
 Update Nginx config:
@@ -233,7 +233,7 @@ docker stop portfolio-app
 
 ### Update to New Version
 ```bash
-docker pull ares2003/portfolio-app:latest
+docker pull ares2003/portfolio-app:v1
 docker stop portfolio-app
 docker rm portfolio-app
 

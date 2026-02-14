@@ -6,10 +6,6 @@ import { usePathname, useRouter } from 'next/navigation'
 import { Home, User, FileText, Briefcase, Wrench, ChevronDown, Mail, Github, Linkedin, Twitter, Menu, X } from 'lucide-react'
 import { useState, useEffect, useRef } from 'react'
 
-// Simple cache - properly initialized
-let profileCache: { data: any, timestamp: number } | null = null
-const CACHE_DURATION = 5 * 60 * 1000 // 5 minutes
-
 export default function Sidebar() {
   const pathname = usePathname()
   const router = useRouter()
@@ -27,21 +23,18 @@ export default function Sidebar() {
   const isNavigating = useRef(false)
   const [loading, setLoading] = useState(true)
 
-  // Fetch user data from API with caching
+  // Fetch user data from API - no caching to ensure fresh data
   useEffect(() => {
     const now = Date.now()
-    if (profileCache && (now - profileCache.timestamp) < CACHE_DURATION) {
-      setUserData(profileCache.data)
-      setLoading(false)
-      return
-    }
     
-    fetch('/api/user/profile')
+    fetch('/api/user/profile?t=' + now, {
+      cache: 'no-store',
+      headers: { 'Cache-Control': 'no-cache' }
+    })
       .then(res => res.json())
       .then(data => {
         if (data) {
           setUserData(data)
-          profileCache = { data, timestamp: now }
         }
         setLoading(false)
       })

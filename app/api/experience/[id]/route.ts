@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server'
 import prisma from '@/lib/prisma'
+import { revalidatePath } from 'next/cache'
 
 export async function GET(
   request: Request,
@@ -39,6 +40,10 @@ export async function PUT(
       },
     })
     
+    // Revalidate pages that display experience
+    revalidatePath('/about')
+    revalidatePath('/admin/experience')
+    
     return NextResponse.json(experience)
   } catch (error) {
     console.error('Experience update error:', error)
@@ -57,6 +62,10 @@ export async function DELETE(
     await prisma.experience.delete({
       where: { id: params.id },
     })
+    
+    // Revalidate pages that display experience
+    revalidatePath('/about')
+    revalidatePath('/admin/experience')
     
     return NextResponse.json({ success: true })
   } catch (error) {

@@ -45,10 +45,19 @@ COPY --from=builder /app/package.json ./package.json
 COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
 COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
 
-# Copy Prisma files for migrations
+# Install sharp for image optimization (must be after copying standalone)
+RUN npm install sharp@0.33.5
+
+# Copy Prisma schema
+COPY --from=builder /app/prisma ./prisma
+
+# Copy complete Prisma installation from builder (includes all binaries)
 COPY --from=builder /app/node_modules/.prisma ./node_modules/.prisma
 COPY --from=builder /app/node_modules/@prisma ./node_modules/@prisma
-COPY --from=builder /app/prisma ./prisma
+COPY --from=builder /app/node_modules/prisma ./node_modules/prisma
+
+# Install prisma CLI for running migrations
+RUN npm install prisma@5.22.0
 
 # Create data directory for SQLite and set permissions
 RUN mkdir -p /app/data && chown -R nextjs:nodejs /app/data

@@ -5,10 +5,6 @@ import Link from 'next/link'
 import { motion } from 'framer-motion'
 import TypewriterEffect from './TypewriterEffect'
 
-// Simple cache
-let heroCache: { data: any, timestamp: number } | null = null
-const CACHE_DURATION = 5 * 60 * 1000 // 5 minutes
-
 const quotes = [
   { text: "Code is like humor. When you have to explain it, it's bad.", author: "Cory House" },
   { text: "First, solve the problem. Then, write the code.", author: "John Johnson" },
@@ -39,20 +35,18 @@ export default function HeroSection() {
     bio: '',
   })
 
-  // Fetch user data from API with caching
+  // Fetch user data from API - no caching to ensure fresh data
   useEffect(() => {
     const now = Date.now()
-    if (heroCache && (now - heroCache.timestamp) < CACHE_DURATION) {
-      setUserData(heroCache.data)
-      return
-    }
     
-    fetch('/api/user/profile')
+    fetch('/api/user/profile?t=' + now, {
+      cache: 'no-store',
+      headers: { 'Cache-Control': 'no-cache' }
+    })
       .then(res => res.json())
       .then(data => {
         if (data) {
           setUserData(data)
-          heroCache = { data, timestamp: now }
         }
       })
       .catch(err => console.error('Failed to load profile'))

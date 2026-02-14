@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
+import { revalidatePath } from 'next/cache'
 
 // GET single project
 export async function GET(
@@ -60,6 +61,12 @@ export async function PUT(
       },
     })
     
+    // Revalidate projects pages
+    revalidatePath('/projects')
+    revalidatePath(`/projects/${project.slug}`)
+    revalidatePath('/admin/projects')
+    revalidatePath('/', 'layout')
+    
     return NextResponse.json({ success: true, message: 'Project updated', data: project })
   } catch (error) {
     console.error('Update project error:', error)
@@ -82,6 +89,11 @@ export async function DELETE(
     await prisma.project.delete({
       where: { id: params.id },
     })
+    
+    // Revalidate projects pages
+    revalidatePath('/projects')
+    revalidatePath('/admin/projects')
+    revalidatePath('/', 'layout')
     
     return NextResponse.json({ success: true, message: 'Project deleted' })
   } catch (error) {

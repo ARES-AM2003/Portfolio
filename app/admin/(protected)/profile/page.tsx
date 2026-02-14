@@ -77,9 +77,16 @@ export default function AdminProfile() {
       const result = await response.json()
       
       if (response.ok) {
+        // Clear all client-side caches
+        if (typeof window !== 'undefined') {
+          sessionStorage.removeItem('profileCache')
+          sessionStorage.removeItem('heroCache')
+          sessionStorage.clear() // Clear all session storage
+        }
+        
         alert('Profile updated successfully!')
-        // Refresh the page data
-        window.location.reload()
+        // Hard reload to bypass all caches
+        window.location.href = window.location.href
       } else {
         alert('Failed to update profile: ' + result.error)
       }
