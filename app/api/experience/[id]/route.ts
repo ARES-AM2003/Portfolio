@@ -16,7 +16,13 @@ export async function GET(
       return NextResponse.json({ error: 'Experience not found' }, { status: 404 })
     }
     
-    return NextResponse.json(experience)
+    // Parse highlights from JSON string to array
+    const response = {
+      ...experience,
+      highlights: experience.highlights ? JSON.parse(experience.highlights) : [],
+    }
+    
+    return NextResponse.json(response)
   } catch (error) {
     console.error('Experience fetch error:', error)
     return NextResponse.json(
@@ -33,18 +39,35 @@ export async function PUT(
   try {
     const data = await request.json()
     
+    // Convert highlights array to JSON string for SQLite
+    const experienceData = {
+      title: data.title,
+      company: data.company,
+      location: data.location || null,
+      startDate: new Date(data.startDate),
+      endDate: data.endDate ? new Date(data.endDate) : null,
+      current: data.current || false,
+      description: data.description,
+      highlights: data.highlights ? JSON.stringify(data.highlights) : null,
+      sortOrder: data.sortOrder || 0,
+    }
+    
     const experience = await prisma.experience.update({
       where: { id: params.id },
-      data: {
-        ...data,
-      },
+      data: experienceData,
     })
     
     // Revalidate pages that display experience
     revalidatePath('/about')
     revalidatePath('/admin/experience')
     
-    return NextResponse.json(experience)
+    // Parse highlights back to array for response
+    const response = {
+      ...experience,
+      highlights: experience.highlights ? JSON.parse(experience.highlights) : [],
+    }
+    
+    return NextResponse.json(response)
   } catch (error) {
     console.error('Experience update error:', error)
     return NextResponse.json(

@@ -21,7 +21,13 @@ export async function GET(
       return NextResponse.json({ error: 'Project not found' }, { status: 404 })
     }
 
-    return NextResponse.json(project)
+    // Parse keyFeatures from JSON string to array
+    const projectData = {
+      ...project,
+      keyFeatures: project.keyFeatures ? JSON.parse(project.keyFeatures as string) : [],
+    }
+
+    return NextResponse.json(projectData)
   } catch (error) {
     console.error('Fetch project error:', error)
     return NextResponse.json({ error: 'Project not found' }, { status: 404 })
@@ -46,18 +52,18 @@ export async function PUT(
       where: { id: params.id },
       data: {
         title: data.title,
-        slug: data.slug,
+        slug: data.slug || data.title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, ''),
         shortDescription: data.shortDescription,
         description: data.description,
-        thumbnail: data.thumbnail,
-        heroImage: data.heroImage,
-        featured: data.featured,
-        published: data.published,
-        year: data.year,
-        githubUrl: data.githubUrl,
-        liveUrl: data.liveUrl,
-        keyFeatures: data.keyFeatures,
-        sortOrder: data.sortOrder,
+        thumbnail: data.thumbnail || null,
+        heroImage: data.heroImage || null,
+        featured: data.featured || false,
+        published: data.published || false,
+        year: data.year || new Date().getFullYear(),
+        githubUrl: data.githubUrl || null,
+        liveUrl: data.liveUrl || null,
+        keyFeatures: data.keyFeatures ? JSON.stringify(data.keyFeatures.filter((f: string) => f.trim() !== '')) : null,
+        sortOrder: data.sortOrder || 0,
       },
     })
     

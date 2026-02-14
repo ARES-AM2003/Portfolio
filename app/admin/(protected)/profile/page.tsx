@@ -4,6 +4,7 @@ import AdminSidebar from '@/components/AdminSidebar'
 import { useState, useEffect } from 'react'
 import { Save } from 'lucide-react'
 import Image from 'next/image'
+import { toast } from 'sonner'
 
 export default function AdminProfile() {
   const [formData, setFormData] = useState({
@@ -84,14 +85,14 @@ export default function AdminProfile() {
           sessionStorage.clear() // Clear all session storage
         }
         
-        alert('Profile updated successfully!')
+        toast.success('Profile updated successfully!')
         // Hard reload to bypass all caches
         window.location.href = window.location.href
       } else {
-        alert('Failed to update profile: ' + result.error)
+        toast.error('Failed to update profile: ' + result.error)
       }
     } catch (error) {
-      alert('Error updating profile')
+      toast.error('Error updating profile')
       console.error(error)
     } finally {
       setSaving(false)

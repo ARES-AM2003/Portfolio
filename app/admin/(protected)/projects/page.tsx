@@ -5,6 +5,7 @@ import { useState, useEffect } from 'react'
 import { Plus, Edit, Trash2, Eye } from 'lucide-react'
 import Link from 'next/link'
 import Image from 'next/image'
+import { toast } from 'sonner'
 
 export default function AdminProjects() {
   const [projects, setProjects] = useState<any[]>([])
@@ -35,14 +36,14 @@ export default function AdminProjects() {
       })
       
       if (response.ok) {
-        alert('Project deleted successfully')
+        toast.success('Project deleted successfully')
         fetchProjects()
       } else {
-        alert('Failed to delete project')
+        toast.error('Failed to delete project')
       }
     } catch (error) {
       console.error('Delete error:', error)
-      alert('Failed to delete project')
+      toast.error('Failed to delete project')
     }
   }
 

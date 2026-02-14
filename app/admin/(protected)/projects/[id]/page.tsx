@@ -5,6 +5,7 @@ import React, { useState, useEffect } from 'react'
 import { Save, ArrowLeft } from 'lucide-react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
+import { toast } from 'sonner'
 
 export default function EditProject({ params }: { params: { id: string } }) {
   const router = useRouter()
@@ -40,7 +41,7 @@ export default function EditProject({ params }: { params: { id: string } }) {
         year: data.year || new Date().getFullYear(),
         featured: data.featured || false,
         published: data.published || true,
-        keyFeatures: data.keyFeatures || [''],
+        keyFeatures: Array.isArray(data.keyFeatures) ? data.keyFeatures : (data.keyFeatures ? [data.keyFeatures] : ['']),
       })
     } catch (error) {
       console.error('Failed to fetch project:', error)
@@ -67,13 +68,13 @@ export default function EditProject({ params }: { params: { id: string } }) {
       const result = await response.json()
       
       if (response.ok) {
-        alert('Project updated successfully!')
+        toast.success('Project updated successfully!')
         router.push('/admin/projects')
       } else {
-        alert('Failed to update project: ' + result.error)
+        toast.error('Failed to update project: ' + result.error)
       }
     } catch (error) {
-      alert('Error updating project')
+      toast.error('Error updating project')
       console.error(error)
     } finally {
       setSaving(false)

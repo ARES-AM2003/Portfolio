@@ -16,7 +16,13 @@ export async function GET() {
       },
     })
 
-    return NextResponse.json(projects)
+    // Parse keyFeatures from JSON string to array for each project
+    const parsedProjects = projects.map(project => ({
+      ...project,
+      keyFeatures: project.keyFeatures ? JSON.parse(project.keyFeatures as string) : [],
+    }))
+
+    return NextResponse.json(parsedProjects)
   } catch (error) {
     console.error('Fetch projects error:', error)
     return NextResponse.json({ error: 'Failed to fetch projects' }, { status: 500 })
@@ -34,20 +40,23 @@ export async function POST(request: Request) {
   try {
     const data = await request.json()
     
+    // Generate slug from title
+    const slug = data.slug || data.title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '')
+    
     const project = await prisma.project.create({
       data: {
         title: data.title,
-        slug: data.slug || data.title.toLowerCase().replace(/\s+/g, '-'),
+        slug: slug,
         shortDescription: data.shortDescription,
         description: data.description,
-        thumbnail: data.thumbnail,
-        heroImage: data.heroImage,
+        thumbnail: data.thumbnail || null,
+        heroImage: data.heroImage || null,
         featured: data.featured || false,
         published: data.published || false,
         year: data.year || new Date().getFullYear(),
-        githubUrl: data.githubUrl,
-        liveUrl: data.liveUrl,
-        keyFeatures: data.keyFeatures || [],
+        githubUrl: data.githubUrl || null,
+        liveUrl: data.liveUrl || null,
+        keyFeatures: data.keyFeatures ? JSON.stringify(data.keyFeatures.filter((f: string) => f.trim() !== '')) : null,
         sortOrder: data.sortOrder || 0,
       }
     })

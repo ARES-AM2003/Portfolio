@@ -3,6 +3,7 @@
 import AdminSidebar from '@/components/AdminSidebar'
 import { useState, useEffect } from 'react'
 import { Plus, Edit, Trash2, Save, X } from 'lucide-react'
+import { toast } from 'sonner'
 
 interface Skill {
   id: string
@@ -15,7 +16,7 @@ interface Skill {
 export default function AdminSkills() {
   const [skills, setSkills] = useState<Skill[]>([])
   const [loading, setLoading] = useState(true)
-  const [editingId, setEditingId] = useState<string | null>(null)
+  const [editingSkill, setEditingSkill] = useState<Skill | null>(null)
   const [showCreateForm, setShowCreateForm] = useState(false)
   const [formData, setFormData] = useState({
     name: '',
@@ -51,15 +52,15 @@ export default function AdminSkills() {
       })
       
       if (response.ok) {
-        alert('Skill created successfully!')
+        toast.success('Skill created successfully!')
         setShowCreateForm(false)
         setFormData({ name: '', category: 'Backend', proficiency: 50, yearsOfExperience: 0 })
         fetchSkills()
       } else {
-        alert('Failed to create skill')
+        toast.error('Failed to create skill')
       }
     } catch (error) {
-      alert('Error creating skill')
+      toast.error('Error creating skill')
       console.error(error)
     }
   }
@@ -73,15 +74,40 @@ export default function AdminSkills() {
       })
       
       if (response.ok) {
-        alert('Skill deleted successfully')
+        toast.success('Skill deleted successfully')
         fetchSkills()
       } else {
-        alert('Failed to delete skill')
+        toast.error('Failed to delete skill')
       }
     } catch (error) {
       console.error('Delete error:', error)
-      alert('Failed to delete skill')
+      toast.error('Failed to delete skill')
     }
+  }
+
+  const handleUpdate = async (skill: Skill) => {
+    try {
+      const response = await fetch(`/api/skills/${skill.id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(skill),
+      })
+      
+      if (response.ok) {
+        toast.success('Skill updated successfully!')
+        setEditingSkill(null)
+        fetchSkills()
+      } else {
+        toast.error('Failed to update skill')
+      }
+    } catch (error) {
+      toast.error('Error updating skill')
+      console.error(error)
+    }
+  }
+
+  const startEdit = (skill: Skill) => {
+    setEditingSkill(skill)
   }
 
   const categories = ['Backend', 'Frontend', 'Database', 'DevOps', 'Tools', 'Other']
@@ -105,6 +131,99 @@ export default function AdminSkills() {
               Add Skill
             </button>
           </div>
+
+          {/* Edit Form Modal */}
+          {editingSkill && (
+            <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+              <div className="glass-effect rounded-xl p-8 max-w-md w-full">
+                <div className="flex items-center justify-between mb-6">
+                  <h2 className="text-2xl font-bold text-white">Edit Skill</h2>
+                  <button
+                    onClick={() => setEditingSkill(null)}
+                    className="text-gray-400 hover:text-white"
+                  >
+                    <X size={24} />
+                  </button>
+                </div>
+                
+                <form onSubmit={(e) => { e.preventDefault(); handleUpdate(editingSkill); }} className="space-y-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-300 mb-2">
+                      Skill Name *
+                    </label>
+                    <input
+                      type="text"
+                      value={editingSkill.name}
+                      onChange={(e) => setEditingSkill({...editingSkill, name: e.target.value})}
+                      className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-lg text-white focus:outline-none focus:border-primary"
+                      placeholder="e.g., Node.js"
+                      required
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-300 mb-2">
+                      Category *
+                    </label>
+                    <select
+                      value={editingSkill.category}
+                      onChange={(e) => setEditingSkill({...editingSkill, category: e.target.value})}
+                      className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-lg text-white focus:outline-none focus:border-primary"
+                    >
+                      {categories.map(cat => (
+                        <option key={cat} value={cat}>{cat}</option>
+                      ))}
+                    </select>
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-300 mb-2">
+                      Proficiency: {editingSkill.proficiency}%
+                    </label>
+                    <input
+                      type="range"
+                      min="0"
+                      max="100"
+                      value={editingSkill.proficiency}
+                      onChange={(e) => setEditingSkill({...editingSkill, proficiency: parseInt(e.target.value)})}
+                      className="w-full accent-primary"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-300 mb-2">
+                      Years of Experience
+                    </label>
+                    <input
+                      type="number"
+                      min="0"
+                      step="0.5"
+                      value={editingSkill.yearsOfExperience || 0}
+                      onChange={(e) => setEditingSkill({...editingSkill, yearsOfExperience: parseFloat(e.target.value)})}
+                      className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-lg text-white focus:outline-none focus:border-primary"
+                      placeholder="e.g., 3.5"
+                    />
+                  </div>
+
+                  <div className="flex gap-3 pt-4">
+                    <button
+                      type="button"
+                      onClick={() => setEditingSkill(null)}
+                      className="flex-1 px-4 py-3 border-2 border-white/20 hover:border-white/40 text-white rounded-lg transition-all"
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      type="submit"
+                      className="flex-1 px-4 py-3 bg-primary hover:bg-primary-dark text-background-dark font-semibold rounded-lg transition-all"
+                    >
+                      Update Skill
+                    </button>
+                  </div>
+                </form>
+              </div>
+            </div>
+          )}
 
           {/* Create Form Modal */}
           {showCreateForm && (
@@ -238,8 +357,16 @@ export default function AdminSkills() {
                           </div>
                           <div className="flex gap-2">
                             <button
+                              onClick={() => startEdit(skill)}
+                              className="p-2 hover:bg-primary/10 text-primary rounded transition-colors"
+                              title="Edit skill"
+                            >
+                              <Edit size={16} />
+                            </button>
+                            <button
                               onClick={() => handleDelete(skill.id)}
                               className="p-2 hover:bg-red-500/10 text-red-400 rounded transition-colors"
+                              title="Delete skill"
                             >
                               <Trash2 size={16} />
                             </button>

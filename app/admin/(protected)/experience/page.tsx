@@ -3,6 +3,7 @@
 import AdminSidebar from '@/components/AdminSidebar'
 import { useState, useEffect } from 'react'
 import { Plus, Edit, Trash2, X, Briefcase } from 'lucide-react'
+import { toast } from 'sonner'
 
 interface Experience {
   id: string
@@ -20,6 +21,7 @@ export default function AdminExperience() {
   const [experiences, setExperiences] = useState<Experience[]>([])
   const [loading, setLoading] = useState(true)
   const [showForm, setShowForm] = useState(false)
+  const [editingId, setEditingId] = useState<string | null>(null)
   const [formData, setFormData] = useState({
     title: '',
     company: '',
@@ -58,22 +60,26 @@ export default function AdminExperience() {
     }
     
     try {
-      const response = await fetch('/api/experience', {
-        method: 'POST',
+      const url = editingId ? `/api/experience/${editingId}` : '/api/experience'
+      const method = editingId ? 'PUT' : 'POST'
+      
+      const response = await fetch(url, {
+        method,
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload),
       })
       
       if (response.ok) {
-        alert('Experience added successfully!')
+        toast.success(editingId ? 'Experience updated successfully!' : 'Experience added successfully!')
         setShowForm(false)
+        setEditingId(null)
         resetForm()
         fetchExperiences()
       } else {
-        alert('Failed to add experience')
+        toast.error(editingId ? 'Failed to update experience' : 'Failed to add experience')
       }
     } catch (error) {
-      alert('Error adding experience')
+      toast.error('Error saving experience')
       console.error(error)
     }
   }
@@ -87,14 +93,14 @@ export default function AdminExperience() {
       })
       
       if (response.ok) {
-        alert('Experience deleted successfully')
+        toast.success('Experience deleted successfully')
         fetchExperiences()
       } else {
-        alert('Failed to delete experience')
+        toast.error('Failed to delete experience')
       }
     } catch (error) {
       console.error('Delete error:', error)
-      alert('Failed to delete experience')
+      toast.error('Failed to delete experience')
     }
   }
 
@@ -109,6 +115,21 @@ export default function AdminExperience() {
       description: '',
       highlights: [''],
     })
+  }
+
+  const startEdit = (exp: Experience) => {
+    setEditingId(exp.id)
+    setFormData({
+      title: exp.title,
+      company: exp.company,
+      location: exp.location || '',
+      startDate: new Date(exp.startDate).toISOString().split('T')[0],
+      endDate: exp.endDate ? new Date(exp.endDate).toISOString().split('T')[0] : '',
+      current: exp.current,
+      description: exp.description,
+      highlights: exp.highlights.length > 0 ? exp.highlights : [''],
+    })
+    setShowForm(true)
   }
 
   const addHighlight = () => {
@@ -156,9 +177,13 @@ export default function AdminExperience() {
             <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4 overflow-y-auto">
               <div className="glass-effect rounded-xl p-8 max-w-2xl w-full my-8">
                 <div className="flex items-center justify-between mb-6">
-                  <h2 className="text-2xl font-bold text-white">Add Work Experience</h2>
+                  <h2 className="text-2xl font-bold text-white">{editingId ? 'Edit' : 'Add'} Work Experience</h2>
                   <button
-                    onClick={() => setShowForm(false)}
+                    onClick={() => {
+                      setShowForm(false)
+                      setEditingId(null)
+                      resetForm()
+                    }}
                     className="text-gray-400 hover:text-white"
                   >
                     <X size={24} />
@@ -358,12 +383,22 @@ export default function AdminExperience() {
                           )}
                         </div>
                       </div>
-                      <button
-                        onClick={() => handleDelete(exp.id)}
-                        className="p-2 hover:bg-red-500/10 text-red-400 rounded-lg transition-colors"
-                      >
-                        <Trash2 size={20} />
-                      </button>
+                      <div className="flex gap-2">
+                        <button
+                          onClick={() => startEdit(exp)}
+                          className="p-2 hover:bg-primary/10 text-primary rounded-lg transition-colors"
+                          title="Edit experience"
+                        >
+                          <Edit size={20} />
+                        </button>
+                        <button
+                          onClick={() => handleDelete(exp.id)}
+                          className="p-2 hover:bg-red-500/10 text-red-400 rounded-lg transition-colors"
+                          title="Delete experience"
+                        >
+                          <Trash2 size={20} />
+                        </button>
+                      </div>
                     </div>
 
                     <p className="text-gray-300 mb-4">{exp.description}</p>

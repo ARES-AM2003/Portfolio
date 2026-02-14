@@ -3,6 +3,7 @@
 import AdminSidebar from '@/components/AdminSidebar'
 import { Eye, MessageSquare, Briefcase, TrendingUp, RefreshCw } from 'lucide-react'
 import { useState, useEffect } from 'react'
+import { toast } from 'sonner'
 
 export default function AdminDashboard() {
   const [stats, setStats] = useState({ projects: 0, messages: 0 })
@@ -50,13 +51,13 @@ export default function AdminDashboard() {
           sessionStorage.removeItem('profileCache')
           sessionStorage.removeItem('heroCache')
         }
-        alert('✅ Cache cleared successfully! Page will reload.')
-        window.location.reload()
+        toast.success('Cache cleared successfully! Page will reload.')
+        setTimeout(() => window.location.reload(), 1000)
       } else {
-        alert('❌ Failed to clear cache: ' + result.error)
+        toast.error('Failed to clear cache: ' + result.error)
       }
     } catch (error) {
-      alert('❌ Error clearing cache')
+      toast.error('Error clearing cache')
       console.error(error)
     } finally {
       setClearing(false)

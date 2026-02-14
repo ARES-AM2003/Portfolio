@@ -3,6 +3,7 @@
 import AdminSidebar from '@/components/AdminSidebar'
 import { useState } from 'react'
 import { Save } from 'lucide-react'
+import { toast } from 'sonner'
 
 export default function AdminSettings() {
   const [formData, setFormData] = useState({
@@ -20,7 +21,7 @@ export default function AdminSettings() {
     // TODO: API call to save settings
     setTimeout(() => {
       setSaving(false)
-      alert('Settings saved successfully!')
+      toast.success('Settings saved successfully!')
     }, 1000)
   }
 

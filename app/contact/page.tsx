@@ -5,6 +5,7 @@ import { useState, useEffect } from 'react'
 import { Send, CheckCircle, Mail, MapPin, Phone } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
 import Image from 'next/image'
+import { toast } from 'sonner'
 
 // Simple cache
 let contactCache: { heroImage: string, timestamp: number } | null = null
@@ -12,6 +13,11 @@ const CACHE_DURATION = 5 * 60 * 1000 // 5 minutes
 
 export default function ContactPage() {
   const [heroImage, setHeroImage] = useState('')
+  const [profileData, setProfileData] = useState({
+    email: '',
+    phone: '',
+    location: '',
+  })
   const [formData, setFormData] = useState({
     name: '',
     email: '',
@@ -29,7 +35,6 @@ export default function ContactPage() {
     
     if (contactCache && (now - contactCache.timestamp) < CACHE_DURATION) {
       setHeroImage(contactCache.heroImage)
-      return
     }
 
     fetch('/api/user/profile')
@@ -40,6 +45,12 @@ export default function ContactPage() {
           setHeroImage(data.heroImage)
           contactCache = { heroImage: data.heroImage, timestamp: now }
         }
+        // Set profile data from API
+        setProfileData({
+          email: data?.email || 'alex@example.com',
+          phone: data?.phone || '+1 (555) 123-4567',
+          location: data?.location || 'San Francisco, CA',
+        })
       })
       .catch(err => console.error('Failed to load profile'))
       
@@ -112,7 +123,7 @@ export default function ContactPage() {
       }, 1000)
     } catch (error) {
       setSending(false)
-      alert('Failed to send message. Please try again.')
+      toast.error('Failed to send message. Please try again.')
     }
   }
 
@@ -346,8 +357,8 @@ export default function ContactPage() {
                       </div>
                       <div className="pt-1">
                         <p className="text-sm font-semibold text-gray-400 mb-2 uppercase tracking-wider">Email</p>
-                        <a href="mailto:alex@example.com" className="text-lg text-primary hover:underline font-medium">
-                          alex@example.com
+                        <a href={`mailto:${profileData.email}`} className="text-lg text-primary hover:underline font-medium">
+                          {profileData.email}
                         </a>
                       </div>
                     </motion.div>
@@ -364,7 +375,7 @@ export default function ContactPage() {
                       </div>
                       <div className="pt-1">
                         <p className="text-sm font-semibold text-gray-400 mb-2 uppercase tracking-wider">Location</p>
-                        <p className="text-lg text-white font-medium">San Francisco, CA</p>
+                        <p className="text-lg text-white font-medium">{profileData.location}</p>
                       </div>
                     </motion.div>
                     
@@ -380,8 +391,8 @@ export default function ContactPage() {
                       </div>
                       <div className="pt-1">
                         <p className="text-sm font-semibold text-gray-400 mb-2 uppercase tracking-wider">Phone</p>
-                        <a href="tel:+15551234567" className="text-lg text-primary hover:underline font-medium">
-                          +1 (555) 123-4567
+                        <a href={`tel:${profileData.phone.replace(/[^0-9+]/g, '')}`} className="text-lg text-primary hover:underline font-medium">
+                          {profileData.phone}
                         </a>
                       </div>
                     </motion.div>

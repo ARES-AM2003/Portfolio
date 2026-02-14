@@ -5,6 +5,7 @@ import { useState } from 'react'
 import { Save, ArrowLeft } from 'lucide-react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
+import { toast } from 'sonner'
 
 export default function NewProject() {
   const router = useRouter()
@@ -37,13 +38,13 @@ export default function NewProject() {
       const result = await response.json()
       
       if (response.ok) {
-        alert('Project created successfully!')
+        toast.success('Project created successfully!')
         router.push('/admin/projects')
       } else {
-        alert('Failed to create project: ' + result.error)
+        toast.error('Failed to create project: ' + result.error)
       }
     } catch (error) {
-      alert('Error creating project')
+      toast.error('Error creating project')
       console.error(error)
     } finally {
       setSaving(false)

@@ -3,6 +3,7 @@ import { Inter } from 'next/font/google'
 import './globals.css'
 import Providers from '@/components/Providers'
 import ScrollToTop from '@/components/ScrollToTop'
+import { Toaster } from 'sonner'
 
 const inter = Inter({ subsets: ['latin'] })
 
@@ -23,6 +24,7 @@ export default function RootLayout({
           {children}
           <ScrollToTop />
         </Providers>
+        <Toaster position="top-right" richColors theme="dark" />
       </body>
     </html>
   )

@@ -33,10 +33,15 @@ export async function PUT(
   try {
     const data = await request.json()
     
+    // Only update allowed fields, exclude relations and readonly fields
     const skill = await prisma.skill.update({
       where: { id: params.id },
       data: {
-        ...data,
+        name: data.name,
+        category: data.category,
+        proficiency: data.proficiency,
+        yearsOfExperience: data.yearsOfExperience,
+        endorsements: data.endorsements,
       },
     })
     
