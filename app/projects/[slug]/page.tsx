@@ -38,6 +38,13 @@ export default async function ProjectDetail({ params }: { params: { slug: string
     notFound()
   }
 
+  // Parse keyFeatures from JSON string to array
+  const keyFeatures = project.keyFeatures 
+    ? (typeof project.keyFeatures === 'string' 
+        ? JSON.parse(project.keyFeatures) 
+        : project.keyFeatures)
+    : []
+
   return (
     <div className="flex min-h-screen">
       <Sidebar />
@@ -169,7 +176,7 @@ export default async function ProjectDetail({ params }: { params: { slug: string
                     <h2 className="text-3xl font-bold text-white">Key Features</h2>
                   </div>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    {(project.keyFeatures as string[]).map((feature: string, index: number) => (
+                    {keyFeatures.map((feature: string, index: number) => (
                       <div
                         key={index}
                         className="flex items-start gap-3 group"
