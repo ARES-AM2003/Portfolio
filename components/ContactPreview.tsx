@@ -33,7 +33,7 @@ export default function ContactPreview() {
       <div className="max-w-5xl mx-auto">
         <div className="text-center mb-16">
           <h2 className="text-5xl font-bold text-white mb-4">Get In Touch</h2>
-          <p className="text-xl text-gray-400">Let's build something amazing together</p>
+          <p className="text-xl text-gray-400">Let&apos;s build something amazing together</p>
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">

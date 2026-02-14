@@ -23,7 +23,7 @@ export default function AboutPreview() {
           <div className="glass-effect rounded-2xl p-8">
             <h3 className="text-3xl font-bold text-white mb-6">My Story</h3>
             <p className="text-lg text-gray-300 leading-relaxed mb-4">
-              I'm a passionate backend developer with over 5 years of experience building scalable, 
+              I&apos;m a passionate backend developer with over 5 years of experience building scalable, 
               high-performance systems. My expertise lies in designing robust APIs, implementing 
               microservices architectures, and optimizing database performance.
             </p>

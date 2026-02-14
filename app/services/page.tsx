@@ -176,9 +176,9 @@ export default function ServicesPage() {
               <div className="absolute bottom-0 right-1/4 w-64 h-64 bg-primary/10 rounded-full blur-3xl" />
               
               <div className="relative z-10">
-                <h2 className="text-5xl font-bold text-white mb-6">Let's Build Something Great</h2>
+                <h2 className="text-5xl font-bold text-white mb-6">Let&apos;s Build Something Great</h2>
                 <p className="text-xl text-gray-300 mb-12 max-w-3xl mx-auto leading-relaxed">
-                  Ready to transform your ideas into powerful, scalable backend solutions? Let's discuss your project.
+                  Ready to transform your ideas into powerful, scalable backend solutions? Let&apos;s discuss your project.
                 </p>
                 <div className="flex gap-6 justify-center flex-wrap">
                   <Link

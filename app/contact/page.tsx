@@ -24,7 +24,9 @@ export default function ContactPage() {
   const [touched, setTouched] = useState<Record<string, boolean>>({})
 
   useEffect(() => {
+    let isMounted = true
     const now = Date.now()
+    
     if (contactCache && (now - contactCache.timestamp) < CACHE_DURATION) {
       setHeroImage(contactCache.heroImage)
       return
@@ -33,12 +35,17 @@ export default function ContactPage() {
     fetch('/api/user/profile')
       .then(res => res.json())
       .then(data => {
+        if (!isMounted) return
         if (data?.heroImage) {
           setHeroImage(data.heroImage)
           contactCache = { heroImage: data.heroImage, timestamp: now }
         }
       })
       .catch(err => console.error('Failed to load profile'))
+      
+    return () => {
+      isMounted = false
+    }
   }, [])
 
   const validateField = (name: string, value: string) => {
@@ -133,28 +140,32 @@ export default function ContactPage() {
           }} />
         </div>
         
-        <section className="relative z-10 min-h-screen p-16">
-          <div className="max-w-5xl mx-auto">
+        <section className="relative z-10 min-h-screen p-8 md:p-16">
+          <div className="max-w-6xl mx-auto">
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
-              className="text-center mb-12"
+              className="mb-16"
             >
-              <h1 className="text-5xl font-bold text-white mb-4 glow-text" style={{
-                textShadow: '0 0 20px rgba(0, 255, 136, 0.5), 0 0 40px rgba(0, 255, 136, 0.3)'
-              }}>Get In Touch</h1>
-              <p className="text-xl text-gray-400">Let's build something amazing together</p>
+              <h1 className="text-6xl md:text-7xl font-black text-white mb-6 leading-tight" style={{
+                textShadow: '0 0 30px rgba(0, 255, 136, 0.3)',
+                background: 'linear-gradient(135deg, #fff 0%, rgba(0, 255, 136, 0.8) 100%)',
+                WebkitBackgroundClip: 'text',
+                WebkitTextFillColor: 'transparent',
+                backgroundClip: 'text'
+              }}>Let&apos;s Connect</h1>
+              <p className="text-2xl text-gray-300 max-w-3xl">Have a project in mind? Let&apos;s discuss how we can work together to build something exceptional.</p>
             </motion.div>
 
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
               {/* Contact Form */}
               <motion.div
                 initial={{ opacity: 0, x: -20 }}
                 animate={{ opacity: 1, x: 0 }}
                 transition={{ delay: 0.2 }}
-                className="glass-effect rounded-2xl p-8"
+                className="relative"
               >
-                <h2 className="text-2xl font-bold text-white mb-6">Send Message</h2>
+                <h2 className="text-3xl font-bold text-white mb-8">Send Message</h2>
                 
                 <AnimatePresence mode="wait">
                   {submitted ? (
@@ -173,7 +184,7 @@ export default function ContactPage() {
                         <CheckCircle size={64} className="text-primary mb-4" />
                       </motion.div>
                       <h3 className="text-2xl font-bold text-white mb-2">Message Sent!</h3>
-                      <p className="text-gray-400">Thank you for reaching out. I'll get back to you soon.</p>
+                      <p className="text-gray-400">Thank you for reaching out. I&apos;ll get back to you soon.</p>
                     </motion.div>
                   ) : (
                     <motion.form
@@ -313,26 +324,29 @@ export default function ContactPage() {
               </motion.div>
 
               {/* Contact Info */}
-              <div className="space-y-6">
+              <div className="space-y-8">
                 <motion.div
                   initial={{ opacity: 0, x: 20 }}
                   animate={{ opacity: 1, x: 0 }}
                   transition={{ delay: 0.3 }}
-                  className="glass-effect rounded-2xl p-8"
+                  className="relative"
                 >
-                  <h2 className="text-2xl font-bold text-white mb-6">Contact Info</h2>
+                  <h2 className="text-3xl font-bold text-white mb-8">Contact Info</h2>
                   
                   <div className="space-y-6">
                     <motion.div
                       whileHover={{ x: 5 }}
-                      className="flex items-start gap-4"
+                      className="flex items-start gap-5 group"
                     >
-                      <div className="w-12 h-12 rounded-lg bg-primary/10 flex items-center justify-center flex-shrink-0">
-                        <Mail className="text-primary" size={20} />
+                      <div className="relative">
+                        <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-primary/30 to-primary/10 flex items-center justify-center flex-shrink-0 group-hover:scale-110 group-hover:rotate-3 transition-all duration-300">
+                          <Mail className="text-primary" size={24} />
+                        </div>
+                        <div className="absolute inset-0 w-16 h-16 rounded-2xl border-2 border-primary/0 group-hover:border-primary/40 group-hover:scale-125 transition-all duration-300" />
                       </div>
-                      <div>
-                        <p className="text-sm text-gray-400 mb-1">Email</p>
-                        <a href="mailto:alex@example.com" className="text-primary hover:underline">
+                      <div className="pt-1">
+                        <p className="text-sm font-semibold text-gray-400 mb-2 uppercase tracking-wider">Email</p>
+                        <a href="mailto:alex@example.com" className="text-lg text-primary hover:underline font-medium">
                           alex@example.com
                         </a>
                       </div>
@@ -340,27 +354,33 @@ export default function ContactPage() {
                     
                     <motion.div
                       whileHover={{ x: 5 }}
-                      className="flex items-start gap-4"
+                      className="flex items-start gap-5 group"
                     >
-                      <div className="w-12 h-12 rounded-lg bg-primary/10 flex items-center justify-center flex-shrink-0">
-                        <MapPin className="text-primary" size={20} />
+                      <div className="relative">
+                        <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-primary/30 to-primary/10 flex items-center justify-center flex-shrink-0 group-hover:scale-110 group-hover:rotate-3 transition-all duration-300">
+                          <MapPin className="text-primary" size={24} />
+                        </div>
+                        <div className="absolute inset-0 w-16 h-16 rounded-2xl border-2 border-primary/0 group-hover:border-primary/40 group-hover:scale-125 transition-all duration-300" />
                       </div>
-                      <div>
-                        <p className="text-sm text-gray-400 mb-1">Location</p>
-                        <p className="text-white">San Francisco, CA</p>
+                      <div className="pt-1">
+                        <p className="text-sm font-semibold text-gray-400 mb-2 uppercase tracking-wider">Location</p>
+                        <p className="text-lg text-white font-medium">San Francisco, CA</p>
                       </div>
                     </motion.div>
                     
                     <motion.div
                       whileHover={{ x: 5 }}
-                      className="flex items-start gap-4"
+                      className="flex items-start gap-5 group"
                     >
-                      <div className="w-12 h-12 rounded-lg bg-primary/10 flex items-center justify-center flex-shrink-0">
-                        <Phone className="text-primary" size={20} />
+                      <div className="relative">
+                        <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-primary/30 to-primary/10 flex items-center justify-center flex-shrink-0 group-hover:scale-110 group-hover:rotate-3 transition-all duration-300">
+                          <Phone className="text-primary" size={24} />
+                        </div>
+                        <div className="absolute inset-0 w-16 h-16 rounded-2xl border-2 border-primary/0 group-hover:border-primary/40 group-hover:scale-125 transition-all duration-300" />
                       </div>
-                      <div>
-                        <p className="text-sm text-gray-400 mb-1">Phone</p>
-                        <a href="tel:+15551234567" className="text-primary hover:underline">
+                      <div className="pt-1">
+                        <p className="text-sm font-semibold text-gray-400 mb-2 uppercase tracking-wider">Phone</p>
+                        <a href="tel:+15551234567" className="text-lg text-primary hover:underline font-medium">
                           +1 (555) 123-4567
                         </a>
                       </div>
@@ -372,9 +392,14 @@ export default function ContactPage() {
                   initial={{ opacity: 0, x: 20 }}
                   animate={{ opacity: 1, x: 0 }}
                   transition={{ delay: 0.4 }}
-                  className="glass-effect rounded-2xl p-8"
+                  className="relative p-8 bg-gradient-to-br from-primary/10 to-primary/5 rounded-2xl border border-primary/20"
                 >
-                  <h2 className="text-2xl font-bold text-white mb-6">Response Time</h2>
+                  <h2 className="text-2xl font-bold text-white mb-4">
+                    <span className="flex items-center gap-3">
+                      <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
+                      Quick Response
+                    </span>
+                  </h2>
                   <p className="text-gray-400 mb-4">
                     I typically respond within <span className="text-primary font-semibold">24 hours</span> during business days.
                   </p>

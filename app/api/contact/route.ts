@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
+import { sendContactNotification } from '@/lib/email'
 
 export async function POST(request: Request) {
   try {
@@ -16,6 +17,19 @@ export async function POST(request: Request) {
         status: 'new',
       }
     })
+    
+    // Send email notification
+    try {
+      await sendContactNotification({
+        name: data.name,
+        email: data.email,
+        subject: data.subject || 'Contact Form Submission',
+        message: data.message,
+      })
+    } catch (emailError) {
+      console.error('Failed to send email notification:', emailError)
+      // Don't fail the request if email fails
+    }
     
     return NextResponse.json({ success: true, message: 'Message sent successfully', data: message })
   } catch (error) {

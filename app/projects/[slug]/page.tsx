@@ -286,7 +286,7 @@ export default async function ProjectDetail({ params }: { params: { slug: string
             <div className="relative z-10">
               <h2 className="text-4xl font-bold text-white mb-4">Interested in Similar Work?</h2>
               <p className="text-gray-300 text-lg mb-8 max-w-2xl mx-auto">
-                I specialize in building robust backend systems and scalable architectures. Let's discuss your project.
+                I specialize in building robust backend systems and scalable architectures. Let&apos;s discuss your project.
               </p>
               <div className="flex items-center justify-center gap-4">
                 <Link

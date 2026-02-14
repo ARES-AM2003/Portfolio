@@ -19,10 +19,10 @@ export default function TypewriterEffect({
   const [currentText, setCurrentText] = useState('')
   const [isDeleting, setIsDeleting] = useState(false)
 
-  // Filter out empty/null/undefined texts
-  const validTexts = texts?.filter(t => t && t.trim()) || []
-
   useEffect(() => {
+    // Filter out empty/null/undefined texts
+    const validTexts = texts?.filter(t => t && t.trim()) || []
+    
     // Handle empty or invalid texts array
     if (validTexts.length === 0) {
       return
@@ -53,7 +53,7 @@ export default function TypewriterEffect({
     }, isDeleting ? deletingSpeed : typingSpeed)
 
     return () => clearTimeout(timeout)
-  }, [currentText, isDeleting, currentTextIndex, validTexts, typingSpeed, deletingSpeed, delayBetweenTexts])
+  }, [currentText, isDeleting, currentTextIndex, texts, typingSpeed, deletingSpeed, delayBetweenTexts])
 
   // Don't render if no valid texts
   if (!texts || texts.length === 0) {

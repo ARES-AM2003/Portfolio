@@ -1,7 +1,7 @@
 'use client'
 
 import AdminSidebar from '@/components/AdminSidebar'
-import { useState, useEffect } from 'react'
+import React, { useState, useEffect } from 'react'
 import { Save, ArrowLeft } from 'lucide-react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
@@ -24,11 +24,7 @@ export default function EditProject({ params }: { params: { id: string } }) {
     keyFeatures: [''],
   })
 
-  useEffect(() => {
-    fetchProject()
-  }, [params.id])
-
-  const fetchProject = async () => {
+  const fetchProject = React.useCallback(async () => {
     try {
       const response = await fetch(`/api/admin/projects/${params.id}`)
       const data = await response.json()
@@ -51,7 +47,11 @@ export default function EditProject({ params }: { params: { id: string } }) {
     } finally {
       setLoading(false)
     }
-  }
+  }, [params.id])
+
+  useEffect(() => {
+    fetchProject()
+  }, [fetchProject])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
